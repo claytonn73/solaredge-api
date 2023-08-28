@@ -20,10 +20,10 @@ RESTClient: The RESTClient data class represents the configuration for making AP
 It includes information such as the API URL, authentication method, supported API endpoints, arguments, parameters,
 and constants. The Solaredge instance of the RESTClient is configured to interact with the SolarEdge API.
 """
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields, is_dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, get_origin
 
 import dateutil.parser
 from dataclasses_json import config, dataclass_json
@@ -179,7 +179,30 @@ class Endpoint:
 
 
 @dataclass
-class Location:
+class baseclass:
+    """This dataclass provides the post_init code to handle the nested dataclasses
+    and formatting of datetime entries"""
+
+    def __post_init__(self):
+        for entry in fields(self):
+            # If the entry type is datetime then convert it from a string to a datetime object
+            if entry.type == datetime:
+                setattr(self, entry.name, dateutil.parser.parse(getattr(self, entry.name)))
+            # If the entry type is a dataclass then parse the entry into the dataclass
+            if is_dataclass(entry.type):
+                # Handle cases where the entry might not exist
+                if getattr(self, entry.name) is not None:
+                    setattr(self, entry.name, entry.type(**(getattr(self, entry.name))))
+            # If the entry type is a list
+            if get_origin(entry.type) == list:
+                # If the type of the list entry is a dataclass then parse each entry of the list into the dataclass
+                if is_dataclass(entry.type.__args__[0]):
+                    for index, data in enumerate(getattr(self, entry.name)):
+                        getattr(self, entry.name)[index] = entry.type.__args__[0](**(getattr(self, entry.name)[index]))
+
+
+@dataclass
+class Location(baseclass):
     """This dataclass describes the location information provided in multiple API endpoints"""
     country: str
     city: str
@@ -191,7 +214,7 @@ class Location:
 
 
 @dataclass
-class PrimaryModule:
+class PrimaryModule(baseclass):
     manufacturerName: str
     modelName: str
     maximumPower: float
@@ -199,7 +222,7 @@ class PrimaryModule:
 
 
 @dataclass
-class Uris:
+class Uris(baseclass):
     SITE_IMAGE: str
     DATA_PERIOD: str
     DETAILS: str
@@ -207,13 +230,13 @@ class Uris:
 
 
 @dataclass
-class PublicSettings:
+class PublicSettings(baseclass):
     isPublic: bool
     name: str = None
 
 
 @dataclass
-class Site:
+class Site(baseclass):
     """This dataclass describes the site information provided by the Sites API endpoint
 
     Attributes:
@@ -242,34 +265,18 @@ class Site:
     alertQuantity: Optional[int] = 0
     alertSeverity: Optional[str] = None
 
-    def __post_init__(self):
-        self.publicSettings = PublicSettings(**self.publicSettings)
-        self.location = Location(**self.location)
-        self.primaryModule = PrimaryModule(**self.primaryModule)
-        self.uris = Uris(**self.uris)
-        self.installationDate = dateutil.parser.parse(self.installationDate)
-        self.lastUpdateTime = dateutil.parser.parse(self.lastUpdateTime)
-
 
 @dataclass
-class SiteList:
+class SiteList(baseclass):
     """This dataclass describes the list of sites provided by the Sites API endpoint"""
     count: int
-    site: List[Site]
-
-    def __post_init__(self):
-        for index, entry in enumerate(self.site):
-            if isinstance(entry, dict):
-                self.site[index] = Site(**self.site[index])
+    site: list[Site]
 
 
 @dataclass
-class SitesResponse:
+class SitesResponse(baseclass):
     """This dataclass describes the response from the Sites API endpoint"""
     sites: SiteList
-
-    def __post_init__(self):
-        self.sites = SiteList(**self.sites)
 
 
 Sites = Endpoint(endpoint="sites/list",
@@ -280,12 +287,9 @@ Sites = Endpoint(endpoint="sites/list",
 
 
 @dataclass
-class SiteInfoResponse:
+class SiteInfoResponse(baseclass):
     """This dataclass describes the response from the SiteInfo API endpoint"""
     details: Site
-
-    def __post_init__(self):
-        self.details = SiteInfo(**self.details)
 
 
 SiteInfo = Endpoint(endpoint="site/{siteid}/details",
@@ -296,7 +300,7 @@ SiteInfo = Endpoint(endpoint="site/{siteid}/details",
 
 
 @dataclass
-class GasEmissionSaved:
+class GasEmissionSaved(baseclass):
     units: str
     co2: float
     so2: float
@@ -304,21 +308,15 @@ class GasEmissionSaved:
 
 
 @dataclass
-class EnvBenefits:
+class EnvBenefits(baseclass):
     gasEmissionSaved: GasEmissionSaved
     treesPlanted: float
     lightBulbs: float
 
-    def __post_init__(self):
-        self.gasEmissionSaved = GasEmissionSaved(**self.gasEmissionSaved)
-
 
 @dataclass
-class EnvBenefitsResponse:
+class EnvBenefitsResponse(baseclass):
     envBenefits: EnvBenefits
-
-    def __post_init__(self):
-        self.envBenefits = EnvBenefits(**self.envBenefits)
 
 
 SiteBenefits = Endpoint(endpoint="site/{siteid}/envBenefits",
@@ -335,18 +333,18 @@ SiteImage = Endpoint(endpoint="site/{siteid}/siteimage/{name}",
 
 
 @dataclass
-class SummaryData:
+class SummaryData(baseclass):
     energy: float
     revenue: Optional[float] = None
 
 
 @dataclass
-class CurrentPower:
+class CurrentPower(baseclass):
     power: float
 
 
 @dataclass
-class OverviewData:
+class OverviewData(baseclass):
     lastUpdateTime: datetime
     lifeTimeData: SummaryData
     lastYearData: SummaryData
@@ -355,21 +353,10 @@ class OverviewData:
     currentPower: CurrentPower
     measuredBy: str
 
-    def __post_init__(self):
-        self.lastUpdateTime = dateutil.parser.parse(self.lastUpdateTime)
-        self.lifeTimeData = SummaryData(**self.lifeTimeData)
-        self.lastYearData = SummaryData(**self.lastYearData)
-        self.lastMonthData = SummaryData(**self.lastMonthData)
-        self.lastDayData = SummaryData(**self.lastDayData)
-        self.currentPower = CurrentPower(**self.currentPower)
-
 
 @dataclass
-class OverviewResponse:
+class OverviewResponse(baseclass):
     overview: OverviewData
-
-    def __post_init__(self):
-        self.overview = OverviewData(**self.overview)
 
 
 SiteOverview = Endpoint(endpoint="site/{siteid}/overview",
@@ -380,21 +367,14 @@ SiteOverview = Endpoint(endpoint="site/{siteid}/overview",
 
 
 @dataclass
-class DataPeriod:
+class DataPeriod(baseclass):
     startDate: datetime
     endDate: datetime
 
-    def __post_init__(self):
-        self.startDate = dateutil.parser.parse(self.startDate)
-        self.endDate = dateutil.parser.parse(self.endDate)
-
 
 @dataclass
-class SiteDataPeriodResponse:
+class SiteDataPeriodResponse(baseclass):
     dataPeriod: DataPeriod
-
-    def __post_init__(self):
-        self.dataPeriod = DataPeriod(**self.dataPeriod)
 
 
 SiteDataPeriod = Endpoint(endpoint="site/{siteid}/dataPeriod",
@@ -405,35 +385,27 @@ SiteDataPeriod = Endpoint(endpoint="site/{siteid}/dataPeriod",
 
 
 @dataclass
-class Value:
+class Value(baseclass):
     date: datetime
-    value: float = 0
+    value: float = float(0)
 
     def __post_init__(self):
-        self.date = dateutil.parser.parse(self.date)
+        super().__post_init__()
         if self.value is None:
-            self.value = 0
+            self.value = float(0)
 
 
 @dataclass
-class EnergyData:
+class EnergyData(baseclass):
     timeUnit: TimeUnit
     unit: str
     measuredBy: str
     values: List[Value]
 
-    def __post_init__(self):
-        for index, entry in enumerate(self.values):
-            if isinstance(entry, dict):
-                self.values[index] = Value(**self.values[index])
-
 
 @dataclass
-class EnergyDataResponse:
+class EnergyDataResponse(baseclass):
     energy: EnergyData
-
-    def __post_init__(self):
-        self.energy = EnergyData(**self.energy)
 
 
 SiteEnergy = Endpoint(endpoint="site/{siteid}/energy",
@@ -445,38 +417,28 @@ SiteEnergy = Endpoint(endpoint="site/{siteid}/energy",
 
 
 @dataclass
-class EnergyValue:
+class EnergyValue(baseclass):
     date: datetime
     energy: float
     unit: str
 
-    def __post_init__(self):
-        self.date = dateutil.parser.parse(self.date)
-
 
 @dataclass
-class TimeFrameEnergyData:
+class TimeFrameEnergyData(baseclass):
     energy: float
     unit: str
     measuredBy: str
     startLifetimeEnergy: EnergyValue
     endLifetimeEnergy: EnergyValue
 
-    def __post_init__(self):
-        self.startLifetimeEnergy = EnergyValue(**self.startLifetimeEnergy)
-        self.endLifetimeEnergy = EnergyValue(**self.endLifetimeEnergy)
-
 
 @dataclass
-class TimeFrameEnergyResponse:
+class TimeFrameEnergyResponse(baseclass):
     timeFrameEnergy: TimeFrameEnergyData
-
-    def __post_init__(self):
-        self.timeFrameEnergy = TimeFrameEnergyData(**self.timeFrameEnergy)
 
 
 SiteEnergyTimeframe = Endpoint(endpoint="site/{siteid}/timeFrameEnergy",
-                               name="Site Energy – Time Period",
+                               name="Site Energy - Time Period",
                                arguments=[APIArgs.SITEID],
                                parms=[APIParms.API_KEY,
                                       APIParms.START_DATE, APIParms.END_DATE],
@@ -484,83 +446,13 @@ SiteEnergyTimeframe = Endpoint(endpoint="site/{siteid}/timeFrameEnergy",
 
 
 @dataclass
-class MeterData:
+class DataType(baseclass):
     type: str
     values: List[Value]
 
-    def __post_init__(self):
-        for index, entry in enumerate(self.values):
-            if isinstance(entry, dict):
-                self.values[index] = Value(**self.values[index])
-
 
 @dataclass
-class EnergyDetailData:
-    timeUnit: TimeUnit
-    unit: str
-    meters: List[MeterData]
-
-    def __post_init__(self):
-        for index, entry in enumerate(self.meters):
-            if isinstance(entry, dict):
-                self.meters[index] = MeterData(**self.meters[index])
-
-
-@dataclass
-class EnergyDetailResponse:
-    energyDetails: EnergyDetailData
-
-    def __post_init__(self):
-        self.energyDetails = EnergyDetailData(**self.energyDetails)
-
-
-EnergyDetails = Endpoint(endpoint="site/{siteid}/energyDetails",
-                         arguments=[APIArgs.SITEID],
-                         parms=[APIParms.API_KEY, APIParms.START_TIME, APIParms.END_TIME,
-                                APIParms.TIME_UNIT, APIParms.METERS],
-                         response=EnergyDetailResponse)
-
-
-@dataclass
-class PowerData:
-    timeUnit: TimeUnit
-    unit: str
-    measuredBy: str
-    values: List[Value]
-
-    def __post_init__(self):
-        for index, entry in enumerate(self.values):
-            if isinstance(entry, dict):
-                self.values[index] = Value(**self.values[index])
-
-
-@dataclass
-class PowerDataResponse:
-    power: PowerData
-
-    def __post_init__(self):
-        self.power = PowerData(**self.power)
-
-
-Power = Endpoint(endpoint="site/{siteid}/power",
-                 arguments=[APIArgs.SITEID],
-                 parms=[APIParms.API_KEY, APIParms.START_TIME, APIParms.END_TIME],
-                 response=PowerDataResponse)
-
-
-@dataclass
-class PowerType:
-    type: str
-    values: List[Value]
-
-    def __post_init__(self):
-        for index, entry in enumerate(self.values):
-            if isinstance(entry, dict):
-                self.values[index] = Value(**self.values[index])
-
-
-@dataclass
-class PowerDetailData:
+class DetailData(baseclass):
     """ This dataclass defines the response to the PowerDetail API request
 
     Atttributes:
@@ -570,28 +462,54 @@ class PowerDetailData:
         """
     timeUnit: TimeUnit
     unit: str
-    meters: List[PowerType]
-
-    def __post_init__(self):
-        for index, entry in enumerate(self.meters):
-            if isinstance(entry, dict):
-                self.meters[index] = PowerType(**self.meters[index])
+    meters: List[DataType]
 
 
 @dataclass
-class PowerDetailsResponse:
-    """This dataclass describes the response from the Power Details API endpoint"""
-    powerDetails: PowerDetailData
+class EnergyDetailResponse(baseclass):
+    energyDetails: DetailData
 
-    def __post_init__(self):
-        self.powerDetails = PowerDetailData(**self.powerDetails)
+
+EnergyDetails = Endpoint(endpoint="site/{siteid}/energyDetails",
+                         name="Site Energy - Details",
+                         arguments=[APIArgs.SITEID],
+                         parms=[APIParms.API_KEY, APIParms.START_TIME, APIParms.END_TIME,
+                                APIParms.TIME_UNIT, APIParms.METERS],
+                         response=EnergyDetailResponse)
+
+
+@dataclass
+class PowerDetailsResponse(baseclass):
+    """This dataclass describes the response from the Power Details API endpoint"""
+    powerDetails: DetailData
 
 
 PowerDetails = Endpoint(endpoint="site/{siteid}/powerDetails",
+                        name="Site Power - Details",
                         arguments=[APIArgs.SITEID],
                         parms=[APIParms.API_KEY, APIParms.START_TIME,
                                APIParms.END_TIME, APIParms.METERS],
                         response=PowerDetailsResponse)
+
+
+@dataclass
+class PowerData(baseclass):
+    timeUnit: TimeUnit
+    unit: str
+    measuredBy: str
+    values: List[Value]
+
+
+@dataclass
+class PowerDataResponse(baseclass):
+    power: PowerData
+
+
+Power = Endpoint(endpoint="site/{siteid}/power",
+                 name="Site Power",
+                 arguments=[APIArgs.SITEID],
+                 parms=[APIParms.API_KEY, APIParms.START_TIME, APIParms.END_TIME],
+                 response=PowerDataResponse)
 
 
 @dataclass_json
@@ -602,7 +520,7 @@ class Connection:
 
 
 @dataclass
-class PowerDetailInfo:
+class PowerDetailInfo(baseclass):
     status: str
     currentPower: float
     chargeLevel: int
@@ -610,7 +528,7 @@ class PowerDetailInfo:
 
 
 @dataclass
-class SiteCurrentPowerFlow:
+class SiteCurrentPowerFlow(baseclass):
     unit: str
     connections: List[Connection]
     GRID: PowerDetailInfo
@@ -618,23 +536,10 @@ class SiteCurrentPowerFlow:
     PV: PowerDetailInfo
     STORAGE: PowerDetailInfo
 
-    def __post_init__(self):
-        self.GRID = PowerDetailInfo(**self.GRID)
-        self.LOAD = PowerDetailInfo(**self.LOAD)
-        self.PV = PowerDetailInfo(**self.PV)
-        self.STORAGE = PowerDetailInfo(**self.STORAGE)
-        for index, entry in enumerate(self.connections):
-            if isinstance(entry, dict):
-                self.connections[index] = Connection(**self.connections[index])
-
 
 @dataclass
-class PowerFlowResponse:
+class PowerFlowResponse(baseclass):
     siteCurrentPowerFlow: SiteCurrentPowerFlow
-
-    def __post_init__(self):
-        self.siteCurrentPowerFlow = PowerFlowResponse(
-            **self.siteCurrentPowerFlow)
 
 
 PowerFlow = Endpoint(endpoint="site/{siteid}/currentPowerFlow",
@@ -645,7 +550,7 @@ PowerFlow = Endpoint(endpoint="site/{siteid}/currentPowerFlow",
 
 
 @dataclass
-class BatteryTelemetry:
+class BatteryTelemetry(baseclass):
     timeStamp: str
     power: int
     batteryState: int
@@ -657,37 +562,23 @@ class BatteryTelemetry:
 
 
 @dataclass
-class Battery:
+class Battery(baseclass):
     nameplate: int
     serialNumber: str
     modelNumber: str
     telemetryCount: int
     telemetries: List[BatteryTelemetry]
 
-    def __post_init__(self):
-        for index, entry in enumerate(self.telemetries):
-            if isinstance(entry, dict):
-                self.telemetries[index] = BatteryTelemetry(
-                    **self.telemetries[index])
-
 
 @dataclass
-class StorageData:
+class StorageData(baseclass):
     batteryCount: int
     batteries: List[Battery]
 
-    def __post_init__(self):
-        for index, entry in enumerate(self.batteries):
-            if isinstance(entry, dict):
-                self.batteries[index] = Battery(**self.batteries[index])
-
 
 @dataclass
-class StorageDataResponse:
+class StorageDataResponse(baseclass):
     storageData: StorageData
-
-    def __post_init__(self):
-        self.storageData = StorageData(**self.storageData)
 
 
 Storage = Endpoint(endpoint="site/{siteid}/storageData",
@@ -699,7 +590,7 @@ Storage = Endpoint(endpoint="site/{siteid}/storageData",
 
 
 @dataclass
-class Meter:
+class Meter(baseclass):
     name: str
     manufacturer: str
     model: str
@@ -707,7 +598,7 @@ class Meter:
 
 
 @dataclass
-class Sensor:
+class Sensor(baseclass):
     """This dataclass describes the sensor information provided by the Inventory API Endpoint"""
     connectedSolaredgeDeviceSN: str
     connectedTo: str
@@ -717,7 +608,7 @@ class Sensor:
 
 
 @dataclass
-class Gateway:
+class Gateway(baseclass):
     """This dataclass describes the gatewayinformation provided by the Inventory API Endpoint"""
     name: str
     serialNumber: str
@@ -725,7 +616,7 @@ class Gateway:
 
 
 @dataclass
-class Battery:
+class Battery(baseclass):
     """This dataclass describes the battery information provided by the Inventory API Endpoint"""
     name: str
     manufacturer: str
@@ -737,7 +628,7 @@ class Battery:
 
 
 @dataclass
-class Inverter:
+class Inverter(baseclass):
     """This dataclass describes the inverter information provided by the Inventory API Endpoint
 
     Attributes:
@@ -754,7 +645,7 @@ class Inverter:
 
 
 @dataclass
-class InventoryData:
+class InventoryData(baseclass):
     """This dataclass describes the information provided by the Inventory API Endpoint
 
     Attributes:
@@ -772,31 +663,11 @@ class InventoryData:
     inverters: list[Inverter]
     site: str = None
 
-    def __post_init__(self):
-        for index, entry in enumerate(self.meters):
-            if isinstance(entry, dict):
-                self.meters[index] = Meter(**self.meters[index])
-        for index, entry in enumerate(self.sensors):
-            if isinstance(entry, dict):
-                self.sensors[index] = Sensor(**self.sensors[index])
-        for index, entry in enumerate(self.gateways):
-            if isinstance(entry, dict):
-                self.gateways[index] = Gateway(**self.gateways[index])
-        for index, entry in enumerate(self.batteries):
-            if isinstance(entry, dict):
-                self.batteries[index] = Battery(**self.batteries[index])
-        for index, entry in enumerate(self.inverters):
-            if isinstance(entry, dict):
-                self.inverters[index] = Inverter(**self.inverters[index])
-
 
 @dataclass
-class InventoryResponse:
+class InventoryResponse(baseclass):
     """This dataclass describes the response from the Inventory API endpoint"""
     Inventory: InventoryData
-
-    def __post_init__(self):
-        self.Inventory = InventoryData(**self.Inventory)
 
 
 Inventory = Endpoint(endpoint="site/{siteid}/inventory",
@@ -807,7 +678,7 @@ Inventory = Endpoint(endpoint="site/{siteid}/inventory",
 
 
 @dataclass
-class ComponentEntry:
+class ComponentEntry(baseclass):
     """This dataclass describes the component data provided by the Components API Endpoint"""
     name: str
     manufacturer: str
@@ -818,24 +689,16 @@ class ComponentEntry:
 
 
 @dataclass
-class ComponentList:
+class ComponentList(baseclass):
     """This dataclass describes the information provided by the Components API Endpoint"""
     count: int
     list: list[ComponentEntry]
 
-    def __post_init__(self):
-        for index, entry in enumerate(self.list):
-            if isinstance(entry, dict):
-                self.list[index] = ComponentEntry(**self.list[index])
-
 
 @dataclass
-class ComponentsResponse:
+class ComponentsResponse(baseclass):
     """This dataclass describes the response from the Components API endpoint"""
     reporters: ComponentList
-
-    def __post_init__(self):
-        self.reporters = ComponentList(**self.reporters)
 
 
 Components = Endpoint(endpoint="equipment/{siteid}/list",
@@ -846,7 +709,7 @@ Components = Endpoint(endpoint="equipment/{siteid}/list",
 
 
 @dataclass
-class LData:
+class LData(baseclass):
     """This dataclass describes the phase information as part of the inverter telemetry."""
     acCurrent: float
     acVoltage: float
@@ -858,7 +721,7 @@ class LData:
 
 
 @dataclass
-class Telemetry:
+class Telemetry(baseclass):
     """This dataclass describes the telemetry information provided for the inverter."""
     date: datetime
     totalActivePower: float
@@ -876,36 +739,18 @@ class Telemetry:
     L2Data: LData = None
     L3Data: LData = None
 
-    def __post_init__(self):
-        self.date = dateutil.parser.parse(self.date)
-        if self.L1Data is not None:
-            self.L1Data = LData(**self.L1Data)
-        if self.L3Data is not None:
-            self.L2Data = LData(**self.L2Data)
-        if self.L3Data is not None:
-            self.L3Data = LData(**self.L3Data)
-
 
 @dataclass
-class InverterInfo:
+class InverterInfo(baseclass):
     """This dataclass describes the information provided by the InverterTelemetry API Endpoint"""
     count: int
     telemetries: List[Telemetry]
 
-    def __post_init__(self):
-        for index, entry in enumerate(self.telemetries):
-            if isinstance(entry, dict):
-                self.telemetries[index] = Telemetry(
-                    **self.telemetries[index])
-
 
 @dataclass
-class InverterResponse:
+class InverterResponse(baseclass):
     """This dataclass describes the response from the InverterTelemetry API endpoint"""
     data: InverterInfo
-
-    def __post_init__(self):
-        self.data = InverterInfo(**self.data)
 
 
 InverterTelemetry = Endpoint(endpoint="equipment/{siteid}/{serialnumber}/data",
@@ -917,16 +762,13 @@ InverterTelemetry = Endpoint(endpoint="equipment/{siteid}/{serialnumber}/data",
 
 
 @dataclass
-class Version:
+class Version(baseclass):
     release: str
 
 
 @dataclass
-class VersionResponse:
+class VersionResponse(baseclass):
     version: Version
-
-    def __post_init__(self):
-        self.version = Version(**self.version)
 
 
 CurrentVersion = Endpoint(endpoint="version/current",
@@ -936,13 +778,8 @@ CurrentVersion = Endpoint(endpoint="version/current",
 
 
 @dataclass
-class VersionsResponse:
+class VersionsResponse(baseclass):
     supported: List[Version]
-
-    def __post_init__(self):
-        for index, entry in enumerate(self.supported):
-            if isinstance(entry, dict):
-                self.supported[index] = Version(**self.supported[index])
 
 
 SupportedVersions = Endpoint(endpoint="version/supported",

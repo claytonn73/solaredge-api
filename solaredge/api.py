@@ -116,7 +116,7 @@ class SolaredgeClient():
         results = self._call_api(api=APIList.SiteEnergy.value)
         return results.energy
 
-    def get_energy_details(self, id: str = None) -> solaredge.const.EnergyDetailData:
+    def get_energy_details(self, id: str = None) -> solaredge.const.DetailData:
         if id is not None:
             self._api.arguments.siteid = id
         results = self._call_api(api=APIList.EnergyDetails.value)
@@ -128,7 +128,7 @@ class SolaredgeClient():
         results = self._call_api(api=APIList.Power.value)
         return results.power
 
-    def get_power_details(self, site: str = None) -> solaredge.const.PowerDetailData:
+    def get_power_details(self, site: str = None) -> solaredge.const.DetailData:
         """Gets the power details from the Solaredge REST API
 
         Args:

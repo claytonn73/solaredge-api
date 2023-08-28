@@ -31,11 +31,11 @@ def main():
 
     with SolaredgeClient(apikey=env.get('solaredge_apikey')) as client:
         pprint.pprint(client.get_supported_versions())
-        # for site in client.get_sites():
-        #    pprint.pprint(site)
+        for site in client.get_sites():
+            pprint.pprint(site)
         #    pprint.pprint(client.get_inverters(site.id))
         # pprint.pprint(client.get_inverter_telemetry())
-        pprint.pprint(list(client._api.constants))
+        # pprint.pprint(list(client._api.constants))
 
 
 if __name__ == "__main__":

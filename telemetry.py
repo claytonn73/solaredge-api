@@ -41,9 +41,9 @@ def main():
             influx_tags = {
                 'site_number': client.site_list[0],
             }
-            logger.info("Adding Solaredge information to influxdb")
-            # Obtain half hour cost figures and add to influxdb
+            # Obtain telemetry data and add to influxdb
             telemetry = client.get_inverter_telemetry()
+            logger.info("Adding Solaredge information to influxdb")
             for data in telemetry:
                 influx_fields = {
                     'dcvoltage': float(data.dcVoltage or 0.0),
