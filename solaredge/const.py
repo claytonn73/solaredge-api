@@ -20,13 +20,13 @@ RESTClient: The RESTClient data class represents the configuration for making AP
 It includes information such as the API URL, authentication method, supported API endpoints, arguments, parameters,
 and constants. The Solaredge instance of the RESTClient is configured to interact with the SolarEdge API.
 """
-from dataclasses import dataclass, field, fields, is_dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import List, Optional, get_origin
+from typing import List, Optional
 
-import dateutil.parser
 from dataclasses_json import config, dataclass_json
+from apiconstruct import baseclass, RESTClient, Endpoint
 
 
 class TimeUnit(Enum):
@@ -81,6 +81,12 @@ class Meters(Enum):
 class Metrics(Enum):
     METRIC = "Metric"
     IMPERIAL = "Imperial"
+
+
+class Currency(Enum):
+    EUR = "Euro"
+    GBP = "Pounds Sterling"
+    USD = "US Dollar"
 
 
 class InverterMode(Enum):
@@ -166,41 +172,6 @@ class APIParameters:
     systemUnits: Metrics = Metrics.METRIC.value
 
 
-@dataclass(frozen=True)
-class Endpoint:
-    """Dataclass describing API endpoints and the data they return."""
-    response: object
-    name: str = None
-    endpoint: str = ""
-    type: str = "get"
-    auth: str = None
-    arguments: list = field(default_factory=list)
-    parms: list = field(default_factory=list)
-
-
-@dataclass
-class baseclass:
-    """This dataclass provides the post_init code to handle the nested dataclasses
-    and formatting of datetime entries"""
-
-    def __post_init__(self):
-        for entry in fields(self):
-            # If the entry type is datetime then convert it from a string to a datetime object
-            if entry.type == datetime:
-                setattr(self, entry.name, dateutil.parser.parse(getattr(self, entry.name)))
-            # If the entry type is a dataclass then parse the entry into the dataclass
-            if is_dataclass(entry.type):
-                # Handle cases where the entry might not exist
-                if getattr(self, entry.name) is not None:
-                    setattr(self, entry.name, entry.type(**(getattr(self, entry.name))))
-            # If the entry type is a list
-            if get_origin(entry.type) == list:
-                # If the type of the list entry is a dataclass then parse each entry of the list into the dataclass
-                if is_dataclass(entry.type.__args__[0]):
-                    for index, data in enumerate(getattr(self, entry.name)):
-                        getattr(self, entry.name)[index] = entry.type.__args__[0](**(getattr(self, entry.name)[index]))
-
-
 @dataclass
 class Location(baseclass):
     """This dataclass describes the location information provided in multiple API endpoints"""
@@ -250,10 +221,10 @@ class Site(baseclass):
     id: int
     name: str
     accountId: int
-    status: str
+    status: SiteStatus
     peakPower: float
     lastUpdateTime: datetime
-    currency: str
+    currency: Currency
     installationDate: datetime
     ptoDate: str
     notes: str
@@ -756,8 +727,7 @@ class InverterResponse(baseclass):
 InverterTelemetry = Endpoint(endpoint="equipment/{siteid}/{serialnumber}/data",
                              name="Inverter Technical Data",
                              arguments=[APIArgs.SITEID, APIArgs.SERIALNUMBER],
-                             parms=[APIParms.API_KEY,
-                                    APIParms.START_TIME, APIParms.END_TIME],
+                             parms=[APIParms.API_KEY, APIParms.START_TIME, APIParms.END_TIME],
                              response=InverterResponse)
 
 
@@ -834,26 +804,6 @@ class SummaryData:
     sites: list[Site] = field(default_factory=list)
     inventories: list[InventoryData] = field(default_factory=list)
     components: list[ComponentEntry] = field(default_factory=list)
-
-
-@dataclass
-class RESTClient:
-    """This dataclass defines the set of information necessary to use a REST API.
-
-    Attributes:
-        url: The URL used for the REST API
-        auth: The type of authorisation used
-        apis: A list of the API Endpoints
-        apiargs: A dataclass describing the set of arguments used by the endpoints
-        apiparms: A dataclass describing the set of parameters used by the endpoints
-        constants: A list of constants
-    """
-    url: str
-    auth: str
-    apilist: Enum
-    arguments: APIArguments
-    parameters: APIParameters
-    constants: Enum
 
 
 # This instance of RESTClient describes the SolarEdge API

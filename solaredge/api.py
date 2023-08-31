@@ -152,11 +152,12 @@ class SolaredgeClient():
         results = self._call_api(api=APIList.Storage.value)
         return results.storageData
 
-    def get_site_components(self, id: str) -> list[solaredge.const.ComponentEntry]:
-        self._api.arguments.siteid = id
+    def get_site_components(self, site: str = None) -> list[solaredge.const.ComponentEntry]:
+        if site is not None:
+            self._api.arguments.siteid = site
         results = self._call_api(api=APIList.Components.value)
         for entry in results.reporters.list:
-            entry.site = id
+            entry.site = self._api.arguments.siteid
         return results.reporters.list
 
     def get_site_inventory(self, id: str) -> solaredge.const.InventoryData:
@@ -198,8 +199,7 @@ class SolaredgeClient():
         self.logger.info(f"Calling API endpoint: {api.name}")
         argumentlist = {}
         for entry in api.arguments:
-            argumentlist.update(
-                {entry.value: getattr(self._api.arguments, entry.value)})
+            argumentlist.update({entry.value: getattr(self._api.arguments, entry.value)})
         # Create a parameter string including any parameters for the endpoint which have a defined value
         parm_string = ""
         for entry in api.parms:
@@ -212,10 +212,10 @@ class SolaredgeClient():
         url = "{}/{}/{}".format(self._api.url,
                                 api.endpoint.format(**argumentlist),
                                 parm_string)
-        # Call the API endpoint and return the results
+        # Call the API endpoint and return the results parsing with the defined dataclass
         return api.response(**self._rest_request(url))
 
-    def _rest_request(self, url: str) -> dict:
+    def _rest_request(self, url: str) -> json:
         """Use the requests module to call the REST API and check the response."""
         try:
             self.logger.debug(f"Issuing HTTP request: {url}")
@@ -224,8 +224,7 @@ class SolaredgeClient():
             results.raise_for_status()
             # Check the REST API response status
             if results.status_code != requests.codes.ok:
-                self.logger.error(
-                    f"API Error encountered for URL: {url} Status Code: {results.status_code}")
+                self.logger.error(f"API Error encountered for URL: {url} Status Code: {results.status_code}")
         except requests.exceptions.HTTPError as err:
             raise SystemExit(err)
         except requests.exceptions.RequestException as err:
