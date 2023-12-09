@@ -303,7 +303,7 @@ SiteImage = Endpoint(endpoint="site/{siteid}/siteimage/{name}",
 
 
 @dataclass
-class SummaryData(baseclass):
+class Summary(baseclass):
     energy: float
     revenue: float = None
 
@@ -316,10 +316,10 @@ class CurrentPower(baseclass):
 @dataclass
 class OverviewData(baseclass):
     lastUpdateTime: datetime
-    lifeTimeData: SummaryData
-    lastYearData: SummaryData
-    lastMonthData: SummaryData
-    lastDayData: SummaryData
+    lifeTimeData: Summary
+    lastYearData: Summary
+    lastMonthData: Summary
+    lastDayData: Summary
     currentPower: CurrentPower
     measuredBy: str
 
@@ -587,7 +587,7 @@ class Gateway(baseclass):
 
 
 @dataclass
-class Battery(baseclass):
+class BatteryInventory(baseclass):
     """This dataclass describes the battery information provided by the Inventory API Endpoint"""
     name: str
     manufacturer: str
@@ -630,7 +630,7 @@ class InventoryData(baseclass):
     meters: list[Meter]
     sensors: list[Sensor]
     gateways: list[Gateway]
-    batteries: list[Battery]
+    batteries: list[BatteryInventory]
     inverters: list[Inverter]
     site: str = None
 

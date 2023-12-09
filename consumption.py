@@ -19,14 +19,14 @@ def main():
             client.set_dates(7, 1)
 
             for site in client.site_list:
-                
+
                 influx_tags = {
                     'site_number': site,
-                }            
+                }
                 influx_data = []
                 logger.info("Adding Solaredge daily information to influxdb")
                 # Obtain daily energy figures and add to influxdb
-                client.set_time_unit("DAY")                                
+                client.set_time_unit("DAY")
                 energy = client.get_energy(id=site)
                 for data in energy.values:
                     influx_fields = {
@@ -46,7 +46,7 @@ def main():
                 influx_data = []
                 logger.info("Adding Solaredge hourly information to influxdb")
                 # Obtain hourly energy figures and add to influxdb
-                client.set_time_unit("HOUR")                
+                client.set_time_unit("HOUR")
                 energy = client.get_energy(id=site)
                 for data in energy.values:
                     influx_fields = {

@@ -90,39 +90,39 @@ class SolaredgeClient():
         results = self._call_api(api=APIList.Sites.value)
         return results.sites.site
 
-    def get_site_details(self, id: str = None) -> solaredge.const.Site:
-        if id is not None:
-            self._api.arguments.siteid = id
+    def get_site_details(self, site_id: str = None) -> solaredge.const.Site:
+        if site_id is not None:
+            self._api.arguments.siteid = site_id
         results = self._call_api(api=APIList.SiteInfo.value)
         return results.details
 
-    def get_data_period(self, id: str = None) -> solaredge.const.DataPeriod:
-        if id is not None:
-            self._api.arguments.siteid = id
+    def get_data_period(self, site_id: str = None) -> solaredge.const.DataPeriod:
+        if site_id is not None:
+            self._api.arguments.siteid = site_id
         results = self._call_api(api=APIList.SiteDataPeriod.value)
         return results.dataPeriod
 
-    def get_site_overview(self, id: str = None) -> solaredge.const.OverviewData:
-        if id is not None:
-            self._api.arguments.siteid = id
+    def get_site_overview(self, site_id: str = None) -> solaredge.const.OverviewData:
+        if site_id is not None:
+            self._api.arguments.siteid = site_id
         results = self._call_api(api=APIList.SiteOverview.value)
         return results.overview
 
-    def get_energy(self, id: str = None) -> solaredge.const.EnergyData:
-        if id is not None:
-            self._api.arguments.siteid = id
+    def get_energy(self, site_id: str = None) -> solaredge.const.EnergyData:
+        if site_id is not None:
+            self._api.arguments.siteid = site_id
         results = self._call_api(api=APIList.SiteEnergy.value)
         return results.energy
 
-    def get_energy_details(self, id: str = None) -> solaredge.const.DetailData:
-        if id is not None:
-            self._api.arguments.siteid = id
+    def get_energy_details(self, site_id: str = None) -> solaredge.const.DetailData:
+        if site_id is not None:
+            self._api.arguments.siteid = site_id
         results = self._call_api(api=APIList.EnergyDetails.value)
         return results.energyDetails
 
-    def get_power(self, id: str = None) -> solaredge.const.PowerData:
-        if id is not None:
-            self._api.arguments.siteid = id
+    def get_power(self, site_id: str = None) -> solaredge.const.PowerData:
+        if site_id is not None:
+            self._api.arguments.siteid = site_id
         results = self._call_api(api=APIList.Power.value)
         return results.power
 
@@ -165,23 +165,23 @@ class SolaredgeClient():
             self._api.arguments.siteid = site
         results = self._call_api(api=APIList.Inventory.value)
         # Add the site ID to the Inventory data for easier handling
-        results.Inventory.site = id
+        results.Inventory.site = site
         return results.Inventory
 
-    def get_inverters(self, id: str) -> list[solaredge.const.Inverter]:
-        results = self.get_site_inventory(id)
+    def get_inverters(self, site_id: str) -> list[solaredge.const.Inverter]:
+        results = self.get_site_inventory(site_id)
         # Add the site ID to each inverter entry for easier handling
         for entry in results.inverters:
-            entry.site = id
+            entry.site = site_id
         return results.inverters
 
-    def get_env_benefits(self, id: str) -> solaredge.const.EnvBenefits:
-        self._api.arguments.siteid = id
+    def get_env_benefits(self, site_id: str) -> solaredge.const.EnvBenefits:
+        self._api.arguments.siteid = site_id
         results = self._call_api(api=APIList.SiteBenefits.value)
         return results.envBenefits
 
-    def get_timeframe_energy(self, id: str) -> solaredge.const.TimeFrameEnergyData:
-        self._api.arguments.siteid = id
+    def get_timeframe_energy(self, site_id: str) -> solaredge.const.TimeFrameEnergyData:
+        self._api.arguments.siteid = site_id
         results = self._call_api(api=APIList.SiteEnergyTimeframe.value)
         return results.timeFrameEnergy
 
@@ -213,9 +213,7 @@ class SolaredgeClient():
                 else:
                     parm_string += f"&{entry.value}={getattr(self._api.parameters, entry.value)}"
         # Create a URL from the supplied information
-        url = "{}/{}/{}".format(self._api.url,
-                                api.endpoint.format(**argumentlist),
-                                parm_string)
+        url = f"{self._api.url}/{api.endpoint.format(**argumentlist)}/{parm_string}"
         # Call the API endpoint and return the results parsing with the defined dataclass
         return api.response(**self._rest_request(url))
 
@@ -230,9 +228,9 @@ class SolaredgeClient():
             if results.status_code != requests.codes.ok:
                 self.logger.error(f"API Error encountered for URL: {url} Status Code: {results.status_code}")
         except requests.exceptions.HTTPError as err:
-            raise SystemExit(err)
+            raise SystemExit(err) from err
         except requests.exceptions.RequestException as err:
-            raise SystemExit(err)
+            raise SystemExit(err) from err
         self.logger.debug(
             f"Formatted API results:\n {json.dumps(results.json(), indent=2)}")
         return results.json()
