@@ -1,7 +1,11 @@
-"""This code contains dataclasses which enable the construction of REST API clients"""
+"""This code contains dataclasses which enable the construction of REST API clients
+
+RESTClient: The RESTClient data class represents the configuration for making API requests.
+It includes information such as the API URL, authentication method, supported API endpoints, arguments, parameters,
+and constants. """
 
 from dataclasses import dataclass, field, fields, is_dataclass
-from datetime import datetime
+from datetime import datetime, date
 from enum import Enum
 from typing import get_origin
 
@@ -15,23 +19,49 @@ class baseclass:
 
     def __post_init__(self):
         for entry in fields(self):
-            # If the entry type is an Enum then convert it to an Enum entry
-            try:
-                if issubclass(entry.type, Enum):
-                    setattr(self, entry.name, entry.type[getattr(self, entry.name)])
-            except KeyError:
-                setattr(self, entry.name, entry.type(getattr(self, entry.name)))
-            except TypeError:
+            if entry.type == str:
                 pass
+            elif entry.type == int:
+                pass
+            elif entry.type == float:
+                pass
+            elif entry.type == bool:
+                pass
+            # If the entry type is date then convert it from a string to a date object
+            elif entry.type == date:
+                if getattr(self, entry.name) is not None:
+                    setattr(self, entry.name, dateutil.parser.parse(getattr(self, entry.name)).date())
             # If the entry type is datetime then convert it from a string to a datetime object
-            if entry.type == datetime:
+            elif entry.type == datetime:
                 if getattr(self, entry.name) is not None:
                     setattr(self, entry.name, dateutil.parser.parse(getattr(self, entry.name)))
+            # If the entry type is a list
+            elif get_origin(entry.type) == list:
+                # If the type of the list entry is a dataclass then parse each entry of the list into the dataclass
+                if is_dataclass(entry.type.__args__[0]):
+                    for index, data in enumerate(getattr(self, entry.name)):
+                        getattr(self, entry.name)[index] = entry.type.__args__[0](**(getattr(self, entry.name)[index]))
+                # If the type of the list entry is an Enum then convert it to an Enum entry
+                if issubclass(entry.type.__args__[0], Enum):
+                    try:
+                        getattr(self, entry.name)[index] = entry.type.__args__[0][data]
+                    except KeyError:
+                        setattr(self, entry.name, entry.type(getattr(self, entry.name)))
+                    except TypeError:
+                        pass
             # If the entry type is a dataclass and the entry is not null then parse the entry into the dataclass
-            if (is_dataclass(entry.type)) & (bool(getattr(self, entry.name)) is True):
+            elif (is_dataclass(entry.type)) & (bool(getattr(self, entry.name)) is True):
                 setattr(self, entry.name, entry.type(**(getattr(self, entry.name))))
+            # If the entry type is an Enum then convert it to an Enum entry
+            elif issubclass(entry.type, Enum):
+                try:
+                    setattr(self, entry.name, entry.type[getattr(self, entry.name)])
+                except KeyError:
+                    setattr(self, entry.name, entry.type(getattr(self, entry.name)))
+                except TypeError:
+                    pass
             # If the entry type is a dict and the entry is not null
-            if (get_origin(entry.type) == dict) & (bool(getattr(self, entry.name)) is True):
+            elif (get_origin(entry.type) == dict) & (bool(getattr(self, entry.name)) is True):
                 # Create a new dict in case we have to change the index
                 new_dict = {}
                 for index, data in enumerate(getattr(self, entry.name)):
@@ -47,24 +77,13 @@ class baseclass:
                     else:
                         new_dict[data] = getattr(self, entry.name)[data]
                 setattr(self, entry.name, new_dict)
-            # If the entry type is a list
-            if get_origin(entry.type) == list:
-                # If the type of the list entry is a dataclass then parse each entry of the list into the dataclass
-                if is_dataclass(entry.type.__args__[0]):
-                    for index, data in enumerate(getattr(self, entry.name)):
-                        getattr(self, entry.name)[index] = entry.type.__args__[0](**(getattr(self, entry.name)[index]))
-                # If the type of the list entry is an Enum then convert it to an Enum entry
-                try:
-                    if issubclass(entry.type.__args__[0], Enum):
-                        getattr(self, entry.name)[index] = entry.type.__args__[0][data]
-                except TypeError:
-                    pass
 
 
 @dataclass(frozen=True)
 class Endpoint:
     """Dataclass describing API endpoints and the data they return."""
     response: object
+    sample: str = None
     name: str = None
     endpoint: str = ""
     type: str = "get"
@@ -98,6 +117,6 @@ class RESTClient:
     url: str
     auth: str
     apilist: Enum
-    arguments: APIArguments
-    parameters: APIParameters
-    constants: Enum
+    arguments: APIArguments = None
+    parameters: APIParameters = None
+    constants: Enum = None

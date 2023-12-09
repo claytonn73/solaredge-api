@@ -3,18 +3,27 @@
 import logging
 import logging.handlers
 import os
+import sys
 import influxdb
 from dotenv import dotenv_values
 
 
-def get_logger():
-    """Log messages to the syslog."""
-    logger = logging.getLogger()
-    handler = logging.handlers.SysLogHandler(facility=logging.handlers.SysLogHandler.LOG_DAEMON, address='/dev/log')
-    logger.setLevel(logging.INFO)
-    logger.addHandler(handler)
-    log_format = 'python[%(process)d]: [%(levelname)s] %(filename)s:%(funcName)s:%(lineno)d \"%(message)s\"'
-    handler.setFormatter(logging.Formatter(fmt=log_format))
+def get_logger(destination: str = "stdout"):
+    
+    if destination == "stdout":
+        """Log message to sysout."""
+        logger = logging.getLogger()
+        logger.addHandler(logging.StreamHandler(sys.stdout))
+        logger.setLevel(logging.INFO)
+
+    elif destination == "syslog":
+        """Log messages to the syslog."""
+        logger = logging.getLogger()
+        handler = logging.handlers.SysLogHandler(facility=logging.handlers.SysLogHandler.LOG_DAEMON, address='/dev/log')
+        logger.setLevel(logging.INFO)
+        logger.addHandler(handler)
+        log_format = 'python[%(process)d]: [%(levelname)s] %(filename)s:%(funcName)s:%(lineno)d \"%(message)s\"'
+        handler.setFormatter(logging.Formatter(fmt=log_format))
     return logger
 
 

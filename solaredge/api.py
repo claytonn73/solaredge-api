@@ -2,14 +2,12 @@
 
 import json
 import logging
-from dataclasses import asdict  # noqa F401
-from datetime import datetime, timedelta # noqa
+from datetime import datetime, timedelta  # noqa
 
-import dateutil.parser  # noqa
 import requests
 
 import solaredge.const
-from solaredge.const import APIList, Solaredge  # noqa F401
+from solaredge.const import APIList, Solaredge
 from solaredge.errors import APIKeyError  # noqa
 
 # Only export the Solaredge Client
@@ -142,13 +140,15 @@ class SolaredgeClient():
         results = self._call_api(api=APIList.PowerDetails.value)
         return results.powerDetails
 
-    def get_power_flow(self, id: str) -> solaredge.const.SiteCurrentPowerFlow:
-        self._api.arguments.siteid = id
+    def get_power_flow(self, site: str = None) -> solaredge.const.SiteCurrentPowerFlow:
+        if site is not None:
+            self._api.arguments.siteid = site
         results = self._call_api(api=APIList.PowerFlow.value)
         return results.SiteCurrentPowerFlow
 
-    def get_storage(self, id: str) -> solaredge.const.StorageData:
-        self._api.arguments.siteid = id
+    def get_storage(self, site: str = None) -> solaredge.const.StorageData:
+        if site is not None:
+            self._api.arguments.siteid = site
         results = self._call_api(api=APIList.Storage.value)
         return results.storageData
 
@@ -160,8 +160,9 @@ class SolaredgeClient():
             entry.site = self._api.arguments.siteid
         return results.reporters.list
 
-    def get_site_inventory(self, id: str) -> solaredge.const.InventoryData:
-        self._api.arguments.siteid = id
+    def get_site_inventory(self, site: str = None) -> solaredge.const.InventoryData:
+        if site is not None:
+            self._api.arguments.siteid = site
         results = self._call_api(api=APIList.Inventory.value)
         # Add the site ID to the Inventory data for easier handling
         results.Inventory.site = id
@@ -193,8 +194,11 @@ class SolaredgeClient():
         else:
             return None
 
-    def _call_api(self, api: solaredge.const.Endpoint = APIList.Sites.value) -> object:
+    def _call_api(self, api: solaredge.const.Endpoint = APIList.Sites.value, sample=False) -> object:
         """Initialise the arguments required to call one of the REST APIs and then call it returning the results."""
+        if sample:
+            self.logger.info(f"Processing sample json for: {api.name}")
+            pass
         # Create a dictionary entry for the arguments required by the endpoint
         self.logger.info(f"Calling API endpoint: {api.name}")
         argumentlist = {}

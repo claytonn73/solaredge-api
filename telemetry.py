@@ -5,11 +5,13 @@ from datetime import datetime
 
 from solaredge.api import SolaredgeClient
 from utilities import InfluxConnection, get_env, get_logger
+# from cProfile import Profile
+# from pstats import SortKey, Stats
 
 
 def main():
-    """Load historical data into influxdb."""
-    logger = get_logger()
+    """Load historical telemetry data into influxdb."""
+    logger = get_logger(destination = "syslog")
     env = get_env()
 
     with InfluxConnection(database="solaredge", reset=False) as connection:
@@ -19,31 +21,41 @@ def main():
             client.set_dates(3, 1)
             client.set_time_unit("DAY")
 
-            influx_tags = {
-                'site_number': client.site_list[0],
-            }
-            # Obtain telemetry data and add to influxdb
-            telemetry = client.get_inverter_telemetry()
-            logger.info("Adding Solaredge inverter telemetry information to influxdb")
-            for data in telemetry:
-                influx_fields = {
-                    'dcvoltage': float(data.dcVoltage or 0.0),
-                    'temperature': float(data.temperature),
-                    'accurrent': float(data.L1Data.acCurrent),
-                    'acvoltage': float(data.L1Data.acVoltage),
-                    'acfrequency': float(data.L1Data.acFrequency),
-                    'month': data.date.strftime("%b %Y"),
+            for site in client.site_list:
+                influx_tags = {
+                    'site_number': site,
                 }
-                influx_data = [
-                    {
-                        'measurement': 'inverter_telemetry',
-                        'time': datetime.strftime(data.date, '%Y-%m-%dT%H:%MZ'),
-                        'tags': influx_tags,
-                        'fields': influx_fields,
+                # Obtain telemetry data and add to influxdb
+                telemetry = client.get_inverter_telemetry()
+                logger.info(f"Adding Solaredge inverter telemetry information to influxdb for site: {site}")
+                influx_data = []
+                for data in telemetry:
+                    influx_fields = {
+                        'dcvoltage': float(data.dcVoltage or 0.0),
+                        'temperature': float(data.temperature),
+                        'accurrent': float(data.L1Data.acCurrent),
+                        'acvoltage': float(data.L1Data.acVoltage),
+                        'acfrequency': float(data.L1Data.acFrequency),
+                        'month': data.date.strftime("%b %Y"),
                     }
-                ]
+                    influx_data.append(
+                        {
+                            'measurement': 'inverter_telemetry',
+                            'time': datetime.strftime(data.date, '%Y-%m-%dT%H:%MZ'),
+                            'tags': influx_tags,
+                            'fields': influx_fields,
+                        }
+                    )
                 connection.influxdb.write_points(influx_data)
 
 
 if __name__ == "__main__":
     main()
+    # with Profile() as profile:
+    #     print(main())
+    # (
+    #     Stats(profile)
+    #     .strip_dirs()
+    #     .sort_stats(SortKey.TIME)
+    #     .print_stats()
+    # )

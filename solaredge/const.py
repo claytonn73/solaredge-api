@@ -16,17 +16,15 @@ These endpoint classes specify the required parameters, arguments, and response 
 APIArguments and APIParameters: The APIArguments and APIParameters data classes are used to store the arguments and
 parameters required for making API requests. These classes have default values and can be customized as needed.
 
-RESTClient: The RESTClient data class represents the configuration for making API requests.
-It includes information such as the API URL, authentication method, supported API endpoints, arguments, parameters,
-and constants. The Solaredge instance of the RESTClient is configured to interact with the SolarEdge API.
+The Solaredge instance of the RESTClient is configured to interact with the SolarEdge API.
 """
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from enum import Enum
-from typing import List, Optional
+from typing import List
 
 from dataclasses_json import config, dataclass_json
-from apiconstruct import baseclass, RESTClient, Endpoint
+from solaredge.apiconstruct import baseclass, RESTClient, Endpoint
 
 
 class TimeUnit(Enum):
@@ -41,6 +39,12 @@ class TimeUnit(Enum):
 class Unit(Enum):
     WATT = "W"
     WATT_HOUR = "Wh"
+
+
+class Currency(Enum):
+    EUR = "Euro"
+    GBP = "Pounds Sterling"
+    USD = "US Dollar"
 
 
 class Order(Enum):
@@ -81,12 +85,6 @@ class Meters(Enum):
 class Metrics(Enum):
     METRIC = "Metric"
     IMPERIAL = "Imperial"
-
-
-class Currency(Enum):
-    EUR = "Euro"
-    GBP = "Pounds Sterling"
-    USD = "US Dollar"
 
 
 class InverterMode(Enum):
@@ -223,9 +221,9 @@ class Site(baseclass):
     accountId: int
     status: SiteStatus
     peakPower: float
-    lastUpdateTime: datetime
+    lastUpdateTime: date
     currency: Currency
-    installationDate: datetime
+    installationDate: date
     ptoDate: str
     notes: str
     type: str
@@ -233,8 +231,8 @@ class Site(baseclass):
     primaryModule: PrimaryModule
     uris: Uris
     publicSettings: PublicSettings
-    alertQuantity: Optional[int] = 0
-    alertSeverity: Optional[str] = None
+    alertQuantity: int = 0
+    alertSeverity: str = None
 
 
 @dataclass
@@ -254,6 +252,7 @@ Sites = Endpoint(endpoint="sites/list",
                  name="Site List",
                  parms=[APIParms.API_KEY, APIParms.SIZE, APIParms.START_INDEX, APIParms.SEARCH_TEXT,
                         APIParms.SORT_PROPERTY, APIParms.SORT_ORDER, APIParms.STATUS],
+                 sample="site_list.json",
                  response=SitesResponse)
 
 
@@ -306,7 +305,7 @@ SiteImage = Endpoint(endpoint="site/{siteid}/siteimage/{name}",
 @dataclass
 class SummaryData(baseclass):
     energy: float
-    revenue: Optional[float] = None
+    revenue: float = None
 
 
 @dataclass
@@ -384,6 +383,7 @@ SiteEnergy = Endpoint(endpoint="site/{siteid}/energy",
                       arguments=[APIArgs.SITEID],
                       parms=[APIParms.API_KEY, APIParms.START_DATE,
                              APIParms.END_DATE, APIParms.TIME_UNIT],
+                      sample="site_energy.json",
                       response=EnergyDataResponse)
 
 
@@ -701,7 +701,7 @@ class Telemetry(baseclass):
     temperature: float
     inverterMode: InverterMode
     operationMode: int
-    groundFaultResistance: Optional[float] = 0
+    groundFaultResistance: float = 0
     vL1To2: float = 0
     vL2To3: float = 0
     vL3To1: float = 0
