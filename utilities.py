@@ -3,7 +3,8 @@
 import logging
 import logging.handlers
 import os
-import sys
+from contextlib import contextmanager
+
 import influxdb
 from dotenv import dotenv_values
 
@@ -12,26 +13,23 @@ def get_logger(destination: str = "stdout"):
     """Creates a logger instance of the desired type"""
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
-    if destination == "stdout":
-        # Log message to sysout
-        logger.addHandler(logging.StreamHandler(sys.stdout))
-
-    elif destination == "syslog":
-        # Log messages to the syslog
-        handler = logging.handlers.SysLogHandler(facility=logging.handlers.SysLogHandler.LOG_DAEMON, 
+    handlers = {
+        "stdout": logging.StreamHandler(),
+        "syslog": logging.handlers.SysLogHandler(facility=logging.handlers.SysLogHandler.LOG_DAEMON, 
                                                  address='/dev/log')
-        logger.addHandler(handler)
+    }
+    handler = handlers.get(destination)
+    if destination == "syslog":
         log_format = 'python[%(process)d]: [%(levelname)s] %(filename)s:%(funcName)s:%(lineno)d \"%(message)s\"'
         handler.setFormatter(logging.Formatter(fmt=log_format))
+    logger.addHandler(handler)
     return logger
 
 
 def get_env() -> dict:
     """Reads environment variables from the users home directory"""
     env_path = os.path.expanduser('~/.env')
-    if os.path.exists(env_path):
-        env = dotenv_values(env_path)
-    return env
+    return dotenv_values(env_path) if os.path.exists(env_path) else {}
 
 
 class InfluxConnection:
@@ -39,20 +37,20 @@ class InfluxConnection:
 
     def __init__(self, database: str, reset: bool = False):
         """Connect to influxdb."""
+        self.database = database
+        self.reset = reset
+
+    @contextmanager
+    def connect(self):
+        """Context manager that ensures the InfluxDB connection is closed."""
         try:
-            self.influxdb = influxdb.InfluxDBClient(
-                host='localhost', port=8086)
-            if reset is True:
-                self.influxdb.drop_database(database)
-                self.influxdb.create_database(database)
-            self.influxdb.switch_database(database)
+            influxdb_client = influxdb.InfluxDBClient(host='localhost', port=8086)
+            if self.reset:
+                influxdb_client.drop_database(self.database)
+                influxdb_client.create_database(self.database)
+            influxdb_client.switch_database(self.database)
+            yield influxdb_client
         except (influxdb.exceptions.InfluxDBClientError, influxdb.exceptions.InfluxDBServerError) as err:
             raise SystemExit(err) from err
-
-    def __enter__(self):
-        """Return the connection."""
-        return self
-
-    def __exit__(self, exc_type, exc_value, exc_traceback):
-        """Close connection to influxdb."""
-        self.influxdb.close()
+        finally:
+            influxdb_client.close()

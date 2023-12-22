@@ -8,13 +8,12 @@ import requests
 
 import solaredge.const
 from solaredge.const import APIList, Solaredge
-from solaredge.errors import APIKeyError  # noqa
 
 # Only export the Solaredge Client
 __all__ = ["SolaredgeClient"]
 
 
-class SolaredgeClient():
+class SolaredgeClient:
     """This class enables queries to be performed using the Solaredge REST API"""
 
     def __init__(self, apikey: str) -> None:
@@ -26,8 +25,8 @@ class SolaredgeClient():
         # Create a logger instance for messages from the API client
         self.logger = logging.getLogger(__name__)
         self.logger.info("Initialising Solaredge API Client")
-        self._session = requests.Session()
         self._api = Solaredge
+        self._session = requests.Session()                
         # Solaredge API uses the API key as a parameter
         self._api.parameters.api_key = apikey
         # Create a dataclass for locally stored information that is retained for the session
@@ -39,8 +38,7 @@ class SolaredgeClient():
             # Set the site ID - with a single site this will remain set
             self._api.arguments.siteid = site.id
             # Store the inventory information for each site
-            self._storeddata.inventories.append(
-                self.get_site_inventory(site.id))
+            self._storeddata.inventories.append(self.get_site_inventory(site.id))
         for data in self._storeddata.inventories:
             for inverter in data.inverters:
                 self.logger.info(f"Found an inverter with SN: {inverter.SN}")
@@ -65,17 +63,39 @@ class SolaredgeClient():
 
     @property
     def inverter_list(self) -> list[str]:
-        return [item.SN for list in [data.inverters for data in self._storeddata.inventories] for item in list]
+        return [
+            item.SN
+            for list in [data.inverters for data in self._storeddata.inventories]
+            for item in list
+        ]
 
     def set_datetimes(self, start: int = 1, end: int = 0) -> None:
-        self._api.parameters.startTime: str = (datetime.now()-timedelta(days=start)).strftime('%Y-%m-%d 00:00:00')
-        self._api.parameters.endTime: str = (datetime.now()-timedelta(days=end)).strftime('%Y-%m-%d 23:59:59')
+        """_summary_
+
+        Args:
+            start (int, optional): _description_. Defaults to 1.
+            end (int, optional): _description_. Defaults to 0.
+        """
+        self._api.parameters.startTime: str = (
+            datetime.now() - timedelta(days=start)
+        ).strftime("%Y-%m-%d 00:00:00")
+        self._api.parameters.endTime: str = (
+            datetime.now() - timedelta(days=end)
+        ).strftime("%Y-%m-%d 23:59:59")
 
     def set_dates(self, start: int = 1, end: int = 0) -> None:
-        self._api.parameters.startDate = (datetime.now()-timedelta(days=start)).strftime('%Y-%m-%d')
-        self._api.parameters.endDate = (datetime.now()-timedelta(days=end)).strftime('%Y-%m-%d')
+        self._api.parameters.startDate = (
+            datetime.now() - timedelta(days=start)
+        ).strftime("%Y-%m-%d")
+        self._api.parameters.endDate = (datetime.now() - timedelta(days=end)).strftime(
+            "%Y-%m-%d"
+        )
 
     def set_time_unit(self, unit: solaredge.const.TimeUnit) -> None:
+        """Sets the time unit for the Solaredge API.
+
+        Args:
+            unit: The time unit to be set. (Type: solaredge.const.TimeUnit)        """
         self._api.parameters.timeUnit = unit
 
     def get_current_version(self) -> solaredge.const.Version:
@@ -89,148 +109,131 @@ class SolaredgeClient():
     def get_sites(self) -> list[solaredge.const.Site]:
         results = self._call_api(api=APIList.Sites.value)
         return results.sites.site
+    
+    def _set_site_id(self, site_id: str) -> None:
+        if site_id is not None:
+             self._api.arguments.siteid = site_id        
 
     def get_site_details(self, site_id: str = None) -> solaredge.const.Site:
-        if site_id is not None:
-            self._api.arguments.siteid = site_id
+        self._set_site_id(site_id)
         results = self._call_api(api=APIList.SiteInfo.value)
         return results.details
 
     def get_data_period(self, site_id: str = None) -> solaredge.const.DataPeriod:
-        if site_id is not None:
-            self._api.arguments.siteid = site_id
+        self._set_site_id(site_id)
         results = self._call_api(api=APIList.SiteDataPeriod.value)
         return results.dataPeriod
 
     def get_site_overview(self, site_id: str = None) -> solaredge.const.OverviewData:
-        if site_id is not None:
-            self._api.arguments.siteid = site_id
+        self._set_site_id(site_id)
         results = self._call_api(api=APIList.SiteOverview.value)
         return results.overview
 
     def get_energy(self, site_id: str = None) -> solaredge.const.EnergyData:
-        if site_id is not None:
-            self._api.arguments.siteid = site_id
+        self._set_site_id(site_id)
         results = self._call_api(api=APIList.SiteEnergy.value)
         return results.energy
 
     def get_energy_details(self, site_id: str = None) -> solaredge.const.DetailData:
-        if site_id is not None:
-            self._api.arguments.siteid = site_id
+        self._set_site_id(site_id)
         results = self._call_api(api=APIList.EnergyDetails.value)
         return results.energyDetails
 
     def get_power(self, site_id: str = None) -> solaredge.const.PowerData:
-        if site_id is not None:
-            self._api.arguments.siteid = site_id
+        self._set_site_id(site_id)
         results = self._call_api(api=APIList.Power.value)
         return results.power
 
-    def get_power_details(self, site: str = None) -> solaredge.const.DetailData:
+    def get_power_details(self, site_id: str = None) -> solaredge.const.DetailData:
         """Gets the power details from the Solaredge REST API
-
         Args:
             site (str): The site ID to be used for the query
-
         Returns:
             solaredge.const.PowerDetailData
         """
-        if site is not None:
-            self._api.arguments.siteid = site
+        self._set_site_id(site_id)
         results = self._call_api(api=APIList.PowerDetails.value)
         return results.powerDetails
 
-    def get_power_flow(self, site: str = None) -> solaredge.const.SiteCurrentPowerFlow:
-        if site is not None:
-            self._api.arguments.siteid = site
+    def get_power_flow(self, site_id: str = None) -> solaredge.const.SiteCurrentPowerFlow:
+        self._set_site_id(site_id)
         results = self._call_api(api=APIList.PowerFlow.value)
         return results.SiteCurrentPowerFlow
 
-    def get_storage(self, site: str = None) -> solaredge.const.StorageData:
-        if site is not None:
-            self._api.arguments.siteid = site
+    def get_storage(self, site_id: str = None) -> solaredge.const.StorageData:
+        self._set_site_id(site_id)
         results = self._call_api(api=APIList.Storage.value)
         return results.storageData
 
-    def get_site_components(self, site: str = None) -> list[solaredge.const.ComponentEntry]:
-        if site is not None:
-            self._api.arguments.siteid = site
+    def get_site_components(self, site_id: str = None) -> list[solaredge.const.ComponentEntry]:
+        self._set_site_id(site_id)
         results = self._call_api(api=APIList.Components.value)
         for entry in results.reporters.list:
             entry.site = self._api.arguments.siteid
         return results.reporters.list
 
-    def get_site_inventory(self, site: str = None) -> solaredge.const.InventoryData:
-        if site is not None:
-            self._api.arguments.siteid = site
+    def get_site_inventory(self, site_id: str = None) -> solaredge.const.InventoryData:
+        self._set_site_id(site_id)
         results = self._call_api(api=APIList.Inventory.value)
         # Add the site ID to the Inventory data for easier handling
-        results.Inventory.site = site
+        results.Inventory.site = self._api.arguments.siteid
         return results.Inventory
 
-    def get_inverters(self, site_id: str) -> list[solaredge.const.Inverter]:
+    def get_inverters(self, site_id: str = None) -> list[solaredge.const.Inverter]:
         results = self.get_site_inventory(site_id)
         # Add the site ID to each inverter entry for easier handling
         for entry in results.inverters:
-            entry.site = site_id
+            entry.site = self._api.arguments.siteid
         return results.inverters
 
-    def get_env_benefits(self, site_id: str) -> solaredge.const.EnvBenefits:
-        self._api.arguments.siteid = site_id
+    def get_env_benefits(self, site_id: str = None) -> solaredge.const.EnvBenefits:
+        self._set_site_id(site_id)
         results = self._call_api(api=APIList.SiteBenefits.value)
         return results.envBenefits
 
-    def get_timeframe_energy(self, site_id: str) -> solaredge.const.TimeFrameEnergyData:
-        self._api.arguments.siteid = site_id
+    def get_timeframe_energy(self, site_id: str = None) -> solaredge.const.TimeFrameEnergyData:
+        self._set_site_id(site_id)
         results = self._call_api(api=APIList.SiteEnergyTimeframe.value)
         return results.timeFrameEnergy
 
     def get_inverter_telemetry(self, serial: str = None) -> list[solaredge.const.Telemetry]:
         if serial is not None:
             self._api.arguments.serialnumber = serial
-        if self._api.arguments.serialnumber is not None:
-            results = self._call_api(api=APIList.InverterData.value)
-            return results.data.telemetries
-        else:
-            return None
+        if self._api.arguments.serialnumber is None:
+            return []            
+        results = self._call_api(api=APIList.InverterData.value)
+        return results.data.telemetries
+
 
     def _call_api(self, api: solaredge.const.Endpoint = APIList.Sites.value, sample=False) -> object:
         """Initialise the arguments required to call one of the REST APIs and then call it returning the results."""
         if sample:
             self.logger.info(f"Processing sample json for: {api.name}")
-            pass
         # Create a dictionary entry for the arguments required by the endpoint
         self.logger.info(f"Calling API endpoint: {api.name}")
-        argumentlist = {}
-        for entry in api.arguments:
-            argumentlist.update({entry.value: getattr(self._api.arguments, entry.value)})
-        # Create a parameter string including any parameters for the endpoint which have a defined value
-        parm_string = ""
-        for entry in api.parms:
-            if getattr(self._api.parameters, entry.value) is not None:
-                if parm_string == "":
-                    parm_string = f"?{entry.value}={getattr(self._api.parameters, entry.value)}"
-                else:
-                    parm_string += f"&{entry.value}={getattr(self._api.parameters, entry.value)}"
-        # Create a URL from the supplied information
-        url = f"{self._api.url}/{api.endpoint.format(**argumentlist)}/{parm_string}"
+        argumentlist = {
+            entry.value: getattr(self._api.arguments, entry.value)
+            for entry in api.arguments
+            if getattr(self._api.arguments, entry.value) is not None
+        }            
+        # Create parameter list from the api definition where the parameter has been set
+        params = {
+            entry.value: getattr(self._api.parameters, entry.value)
+            for entry in api.parms
+            if getattr(self._api.parameters, entry.value) is not None
+        }
+        # Create a URL from the supplied information        
+        url = f"{self._api.url}/{api.endpoint.format(**argumentlist)}"                    
         # Call the API endpoint and return the results parsing with the defined dataclass
-        return api.response(**self._rest_request(url))
-
-    def _rest_request(self, url: str) -> json:
-        """Use the requests module to call the REST API and check the response."""
         try:
-            self.logger.debug(f"Issuing HTTP request: {url}")
-            results = self._session.get(url=url, timeout=60)
-            self.logger.debug(f'Response received: {results}')
+            results = self._session.get(url=url, params=params, timeout=60)
             results.raise_for_status()
-            # Check the REST API response status
-            if results.status_code != requests.codes.ok:
-                self.logger.error(f"API Error encountered for URL: {url} Status Code: {results.status_code}")
-        except requests.exceptions.HTTPError as err:
-            raise SystemExit(err) from err
+            self.logger.debug(
+                f"Formatted API results:\n {json.dumps(results.json(), indent=2)}"
+            )
+            return api.response(**results.json())
         except requests.exceptions.RequestException as err:
-            raise SystemExit(err) from err
-        self.logger.debug(
-            f"Formatted API results:\n {json.dumps(results.json(), indent=2)}")
-        return results.json()
+            self.logger.error(f"Requests error encountered: {err}")
+            raise err        
+
+

@@ -2,6 +2,7 @@
 """Call the Solaredge API and print the results."""
 
 import pprint
+import logging
 from datetime import datetime  # noqa
 # from cProfile import Profile
 # from pstats import SortKey, Stats
@@ -10,11 +11,11 @@ from solaredge.api import SolaredgeClient
 from utilities import get_env, get_logger
 
 
-def main():
+def main() -> None:
     """Call one of the Solaredge Api endpoints and print the formatted results."""
     logger = get_logger(destination="stdout") # noqa
     env = get_env()
-
+    logger.setLevel(logging.DEBUG)
     with SolaredgeClient(apikey=env.get('solaredge_apikey')) as client:
         pprint.pprint(client.get_supported_versions())
         for site in client.get_sites():
@@ -25,7 +26,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main()       
     # with Profile() as profile:
     #     print(main())
     # (
