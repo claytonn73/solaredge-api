@@ -17,6 +17,7 @@ def main() -> None:
     env = get_env()
     logger.setLevel(logging.DEBUG)
     with SolaredgeClient(apikey=env.get('solaredge_apikey')) as client:
+        help(client)
         pprint.pprint(client.get_supported_versions())
         for site in client.get_sites():
             pprint.pprint(site)

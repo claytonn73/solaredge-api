@@ -772,6 +772,7 @@ class ConstantList(Enum):
     InverterMode = InverterMode
     OperationMode = OperationMode
     Endpoint = Endpoint
+    DateFormat = "%Y-%m-%d"
 
 
 class APIList(Enum):

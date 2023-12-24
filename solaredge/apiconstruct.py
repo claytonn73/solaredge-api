@@ -5,7 +5,7 @@ It includes information such as the API URL, authentication method, supported AP
 and constants. """
 
 from dataclasses import dataclass, field, fields, is_dataclass
-from datetime import datetime, date
+from datetime import datetime, date, time
 from enum import Enum
 from typing import get_origin
 
@@ -17,65 +17,64 @@ class baseclass:
     """This dataclass provides the post_init code to handle the nested dataclasses
     and formatting of datetime entries"""
 
-    def __post_init__(self):
+
+    def __post_init__(self) -> None:
         for entry in fields(self):
-            if entry.type == str:
+            entry_value = getattr(self, entry.name)            
+            if entry.type in (str, int, float, bool):
                 pass
-            elif entry.type == int:
-                pass
-            elif entry.type == float:
-                pass
-            elif entry.type == bool:
+            elif issubclass(entry.type.__class__, range):
                 pass
             # If the entry type is date then convert it from a string to a date object
-            elif entry.type == date:
-                if getattr(self, entry.name) is not None:
-                    setattr(self, entry.name, dateutil.parser.parse(getattr(self, entry.name)).date())
+            elif entry.type == date and entry_value is not None:
+                setattr(self, entry.name, dateutil.parser.parse(entry_value).date())
+            # If the entry type is time then convert it from a string to a time object
+            elif entry.type == time and entry_value is not None:
+                setattr(self, entry.name, dateutil.parser.parse(entry_value).time())                
             # If the entry type is datetime then convert it from a string to a datetime object
-            elif entry.type == datetime:
-                if getattr(self, entry.name) is not None:
-                    setattr(self, entry.name, dateutil.parser.parse(getattr(self, entry.name)))
+            elif entry.type == datetime and entry_value is not None:
+                setattr(self, entry.name, dateutil.parser.parse(entry_value))
             # If the entry type is a list
             elif get_origin(entry.type) == list:
                 # If the type of the list entry is a dataclass then parse each entry of the list into the dataclass
                 if is_dataclass(entry.type.__args__[0]):
-                    for index, data in enumerate(getattr(self, entry.name)):
-                        getattr(self, entry.name)[index] = entry.type.__args__[0](**(getattr(self, entry.name)[index]))
+                    for index, data in enumerate(entry_value):
+                        entry_value[index] = entry.type.__args__[0](**(entry_value[index]))
                 # If the type of the list entry is an Enum then convert it to an Enum entry
                 if issubclass(entry.type.__args__[0], Enum):
                     try:
-                        getattr(self, entry.name)[index] = entry.type.__args__[0][data]
+                        entry_value[index] = entry.type.__args__[0][data]
                     except KeyError:
-                        setattr(self, entry.name, entry.type(getattr(self, entry.name)))
+                        setattr(self, entry.name, entry.type(entry_value))
                     except TypeError:
                         pass
             # If the entry type is a dataclass and the entry is not null then parse the entry into the dataclass
-            elif (is_dataclass(entry.type)) & (bool(getattr(self, entry.name)) is True):
-                setattr(self, entry.name, entry.type(**(getattr(self, entry.name))))
+            elif (is_dataclass(entry.type)) and (bool(entry_value)):
+                setattr(self, entry.name, entry.type(**(entry_value)))
             # If the entry type is an Enum then convert it to an Enum entry
             elif issubclass(entry.type, Enum):
                 try:
-                    setattr(self, entry.name, entry.type[getattr(self, entry.name)])
+                    setattr(self, entry.name, entry.type[entry_value])
                 except KeyError:
-                    setattr(self, entry.name, entry.type(getattr(self, entry.name)))
+                    setattr(self, entry.name, entry.type(entry_value))
                 except TypeError:
                     pass
             # If the entry type is a dict and the entry is not null
-            elif (get_origin(entry.type) == dict) & (bool(getattr(self, entry.name)) is True):
+            elif (get_origin(entry.type) == dict) and (bool(entry_value)):
                 # Create a new dict in case we have to change the index
                 new_dict = {}
-                for index, data in enumerate(getattr(self, entry.name)):
+                for index, data in enumerate(entry_value):
                     # if the dict value is a dataclass
                     if is_dataclass(entry.type.__args__[1]):
-                        getattr(self, entry.name)[data] = entry.type.__args__[1](**(getattr(self, entry.name)[data]))
+                        entry_value[data] = entry.type.__args__[1](**(entry_value[data]))
                     # if the dict index is an enum
                     if issubclass(entry.type.__args__[0], Enum):
                         # print(getattr(entry.type.__args__[0], data))
-                        new_dict[getattr(entry.type.__args__[0], data)] = getattr(self, entry.name)[data]
-                        # for index, data in enumerate(getattr(self, entry.name)):
-                        #    getattr(self, entry.name)[index] = entry.type.__args__[0][entry.name]
+                        new_dict[getattr(entry.type.__args__[0], data)] = entry_value[data]
+                        # for index, data in enumerate(entry_value):
+                        #    entry_value[index] = entry.type.__args__[0][entry.name]
                     else:
-                        new_dict[data] = getattr(self, entry.name)[data]
+                        new_dict[data] = entry_value[data]
                 setattr(self, entry.name, new_dict)
 
 
