@@ -28,6 +28,7 @@ class SolaredgeClient:
         # Solaredge API uses the API key as a parameter
         self._api.parameters.api_key = apikey
         self._session = requests.Session()
+        self._session.headers = {"accept": "application/json"}
         self._initialize_data()
 
     def __enter__(self) -> object:
@@ -227,8 +228,9 @@ class SolaredgeClient:
             results.raise_for_status()
         except requests.exceptions.RequestException as err:
             self.logger.error(f"Requests error encountered: {err}")
-            raise err        
-        self.logger.debug(
-            f"Formatted API results:\n {ujson.dumps(results.json(), indent=2)}"
-        )
+            raise err
+        if self.logger.isEnabledFor(logging.DEBUG):     
+            self.logger.debug(
+                f"Formatted API results:\n {ujson.dumps(results.json(), indent=2)}"
+            )
         return api.value.response.parse_kwargs(self, api.value.response, **results.json())
