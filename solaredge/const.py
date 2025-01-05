@@ -19,15 +19,17 @@ parameters required for making API requests. These classes have default values a
 The Solaredge instance of the RESTClient is configured to interact with the SolarEdge API.
 """
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, date
+from datetime import date, datetime, timedelta
 from enum import Enum
 from typing import List
 
 from dataclasses_json import config, dataclass_json
-from solaredge.apiconstruct import baseclass, RESTClient, Endpoint
+
+from solaredge.apiconstruct import Endpoint, RESTClient, baseclass
 
 
 class TimeUnit(Enum):
+    """This enum describes the different time units in which data can be returned"""        
     QUARTER_OF_AN_HOUR = "QUARTER_OF_AN_HOUR"
     HOUR = "HOUR"
     DAY = "DAY"
@@ -53,6 +55,12 @@ class Order(Enum):
 
 
 class SiteStatus(Enum):
+    """Enumeration representing the status of a site.
+    Possible values:
+    - `ACTIVE`: The site is in an active state.
+    - `PENDING`: The site has been created but no data has been received yet.
+    - `DISABLED`: The site is in a disabled state.
+    - `ALL`: Special value indicating that all possible statuses should be returned when this is used as a parameter."""
     ACTIVE = "Active"
     PENDING = "Pending"
     DISABLED = "Disabled"
@@ -147,6 +155,9 @@ class APIParms(Enum):
     SERIALS = "serials"
     SYSTEM_UNITS = "systemUnits"
 
+class DateFormats(Enum):
+    DATE = '%Y-%m-%d'
+    DATETIME = '%Y-%m-%d %H:%M:%S'
 
 @dataclass
 class APIParameters:
@@ -159,11 +170,11 @@ class APIParameters:
     Status: SiteStatus = SiteStatus.ALL.value
     api_key: str = None
     startDate: str = (datetime.now(tz=None) -
-                      timedelta(days=1)).strftime('%Y-%m-%d')
-    endDate: str = (datetime.now(tz=None)).strftime('%Y-%m-%d')
+                      timedelta(days=1)).strftime(DateFormats.DATE.value)
+    endDate: str = (datetime.now(tz=None)).strftime(DateFormats.DATE.value)
     startTime: str = (datetime.now(tz=None)-timedelta(days=1)
-                      ).strftime('%Y-%m-%d %H:%M:%S')
-    endTime: str = datetime.now(tz=None).strftime('%Y-%m-%d %H:%M:%S')
+                      ).strftime(DateFormats.DATETIME.value)
+    endTime: str = datetime.now(tz=None).strftime(DateFormats.DATETIME.value)
     timeUnit: TimeUnit = TimeUnit.HOUR.value
     meters: Meters = None
     serials: str = None
@@ -237,7 +248,9 @@ class Site(baseclass):
 
 @dataclass
 class SiteList(baseclass):
-    """This dataclass describes the list of sites provided by the Sites API endpoint"""
+    """This dataclass describes the list of sites provided by the Sites API endpoint
+        Attributes: count - count of sites
+                    site - a list of site information"""
     count: int
     site: list[Site]
 
@@ -271,6 +284,7 @@ SiteInfo = Endpoint(endpoint="site/{siteid}/details",
 
 @dataclass
 class GasEmissionSaved(baseclass):
+    """This dataclass describes the gas emissions savings returned by the SiteBenefits API"""        
     units: str
     co2: float
     so2: float
@@ -279,6 +293,7 @@ class GasEmissionSaved(baseclass):
 
 @dataclass
 class EnvBenefits(baseclass):
+    """This dataclass describes the environmental benefits returned by the SiteBenefits API"""    
     gasEmissionSaved: GasEmissionSaved
     treesPlanted: float
     lightBulbs: float
@@ -286,6 +301,7 @@ class EnvBenefits(baseclass):
 
 @dataclass
 class EnvBenefitsResponse(baseclass):
+    """This dataclass describes the initial response for the SiteBenefits API"""
     envBenefits: EnvBenefits
 
 
@@ -304,17 +320,20 @@ SiteImage = Endpoint(endpoint="site/{siteid}/siteimage/{name}",
 
 @dataclass
 class Summary(baseclass):
+    """This dataclass describes the historical summary data returned by the SiteOverview API"""           
     energy: float
     revenue: float = None
 
 
 @dataclass
 class CurrentPower(baseclass):
+    """This dataclass describes the current power data returned by the SiteOverview API"""       
     power: float
 
 
 @dataclass
 class OverviewData(baseclass):
+    """This dataclass describes the energy overview data returned by the SiteOverview API"""     
     lastUpdateTime: datetime
     lifeTimeData: Summary
     lastYearData: Summary
@@ -326,6 +345,7 @@ class OverviewData(baseclass):
 
 @dataclass
 class OverviewResponse(baseclass):
+    """This dataclass describes the initial response for the SiteOverview API"""       
     overview: OverviewData
 
 
@@ -338,12 +358,16 @@ SiteOverview = Endpoint(endpoint="site/{siteid}/overview",
 
 @dataclass
 class DataPeriod(baseclass):
+    """This dataclass describes the data period returned by the SiteDataPeriod API
+        Atttributes: startDate, endDate"""    
     startDate: datetime
     endDate: datetime
 
 
 @dataclass
 class SiteDataPeriodResponse(baseclass):
+    """This dataclass describes the initial response for the SiteDataPeriod API
+        Atttributes: dataPeriod"""
     dataPeriod: DataPeriod
 
 
@@ -418,6 +442,9 @@ SiteEnergyTimeframe = Endpoint(endpoint="site/{siteid}/timeFrameEnergy",
 
 @dataclass
 class DataType(baseclass):
+    """This dataclass describes a list of information retuened by various API endpoints
+        Attrributes: type - the type of data in the list
+                     values - a list of values of this type"""    
     type: str
     values: List[Value]
 
@@ -438,6 +465,7 @@ class DetailData(baseclass):
 
 @dataclass
 class EnergyDetailResponse(baseclass):
+    """This dataclass describes the response from the EnergyDetails API endpoint"""    
     energyDetails: DetailData
 
 
@@ -465,6 +493,7 @@ PowerDetails = Endpoint(endpoint="site/{siteid}/powerDetails",
 
 @dataclass
 class PowerData(baseclass):
+    
     timeUnit: TimeUnit
     unit: str
     measuredBy: str
@@ -473,6 +502,7 @@ class PowerData(baseclass):
 
 @dataclass
 class PowerDataResponse(baseclass):
+    """This dataclass is the intial response from the PowerData API endpoint"""      
     power: PowerData
 
 
@@ -510,6 +540,7 @@ class SiteCurrentPowerFlow(baseclass):
 
 @dataclass
 class PowerFlowResponse(baseclass):
+    """This dataclass is the intial response from the PowerFlow API endpoint"""    
     siteCurrentPowerFlow: SiteCurrentPowerFlow
 
 
@@ -562,6 +593,7 @@ Storage = Endpoint(endpoint="site/{siteid}/storageData",
 
 @dataclass
 class Meter(baseclass):
+    """This dataclass describes the meter information provided by the Inventory API Endpoint"""    
     name: str
     manufacturer: str
     model: str
@@ -733,11 +765,14 @@ InverterTelemetry = Endpoint(endpoint="equipment/{siteid}/{serialnumber}/data",
 
 @dataclass
 class Version(baseclass):
+    """This dataclass describes the version information provided by Version and Supported Versions API endpoint
+        Attributes : release"""        
     release: str
 
 
 @dataclass
 class VersionResponse(baseclass):
+    """This dataclass describes the response from the Version API endpoint"""    
     version: Version
 
 
@@ -772,7 +807,7 @@ class ConstantList(Enum):
     InverterMode = InverterMode
     OperationMode = OperationMode
     Endpoint = Endpoint
-    DateFormat = "%Y-%m-%d"
+    DateFormats = DateFormats
 
 
 class APIList(Enum):

@@ -1,13 +1,13 @@
 """Contains the Solaredge API class and its methods."""
 
-import json
+import ujson
 import logging
 from datetime import datetime, timedelta  # noqa
 
 import requests
 
 import solaredge.const
-from solaredge.const import APIList, Solaredge
+from solaredge.const import APIList, Solaredge, DateFormats
 
 # Only export the Solaredge Client
 __all__ = ["SolaredgeClient"]
@@ -78,19 +78,19 @@ class SolaredgeClient:
             start (int, optional): _description_. Defaults to 1.
             end (int, optional): _description_. Defaults to 0.
         """
-        self._api.parameters.startTime: str = (
+        self._api.parameters.startTime = (
             datetime.now() - timedelta(days=start)
-        ).strftime(f"{Solaredge.constants.DateFormat.value} 00:00:00")
-        self._api.parameters.endTime: str = (
+        ).strftime(f"{DateFormats.DATE.value} 00:00:00")
+        self._api.parameters.endTime = (
             datetime.now() - timedelta(days=end)
-        ).strftime(f"{Solaredge.constants.DateFormat.value} 23:59:59")
+        ).strftime(f"{DateFormats.DATE.value} 23:59:59")
 
     def set_dates(self, start: int = 1, end: int = 0) -> None:
         self._api.parameters.startDate = (
             datetime.now() - timedelta(days=start)
-        ).strftime(Solaredge.constants.DateFormat.value)
+        ).strftime(DateFormats.DATE.value)
         self._api.parameters.endDate = (datetime.now() - timedelta(days=end)).strftime(
-            Solaredge.constants.DateFormat.value
+            DateFormats.DATE.value
         )
 
     def set_time_unit(self, unit: solaredge.const.TimeUnit) -> None:
@@ -201,7 +201,7 @@ class SolaredgeClient:
             self._api.arguments.serialnumber = serial
         if self._api.arguments.serialnumber is None:
             return []            
-        return self._call_api(api=APIList.InverterData).data.telemetries
+        return self._call_api(api=APIList.InverterData).data.telemetries    
 
     def _call_api(self, api: solaredge.const.APIList = APIList.Sites, sample=False) -> object:
         """Initialise the arguments required to call one of the REST APIs and then call it returning the results."""
@@ -229,6 +229,6 @@ class SolaredgeClient:
             self.logger.error(f"Requests error encountered: {err}")
             raise err        
         self.logger.debug(
-            f"Formatted API results:\n {json.dumps(results.json(), indent=2)}"
+            f"Formatted API results:\n {ujson.dumps(results.json(), indent=2)}"
         )
-        return api.value.response(**results.json())
+        return api.value.response.parse_kwargs(self, api.value.response, **results.json())
