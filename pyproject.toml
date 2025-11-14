@@ -1,25 +1,19 @@
 [build-system]
-requires = [
-    "setuptools>=65",
-    "wheel >= 0.38",
-    "pep517>=0.11",    
-]
+requires = ["setuptools>=65", "wheel >= 0.38", "pep517>=0.11"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "myenergi"
-version = "1.0.0"
+name = "solaredge"
+version = "0.0.1"
 dependencies = [
     "requests",
-    "dotenv",
+    "python-dotenv",
     "influxdb",
     "argparse",
     "dateutil",
     "dataclasses_json",
 ]
-authors = [
-  { name="Nick Clayton", email="nick.m.clayton@gmail.com" },
-]
+authors = [{ name = "Nick Clayton", email = "nick.m.clayton@gmail.com" }]
 description = "API for Solaredge devices"
 readme = "README.md"
 requires-python = ">=3.9"

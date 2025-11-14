@@ -18,18 +18,21 @@ parameters required for making API requests. These classes have default values a
 
 The Solaredge instance of the RESTClient is configured to interact with the SolarEdge API.
 """
+
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from enum import Enum
-from typing import List
+from typing import List, Optional, Type
 
 from dataclasses_json import config, dataclass_json
 
-from solaredge.apiconstruct import Endpoint, RESTClient, baseclass
+import solaredge.apiconstruct
+from solaredge.apiconstruct import Endpoint, RESTClient, baseclass, APIParameters, APIArguments, APIResponses
 
 
 class TimeUnit(Enum):
-    """This enum describes the different time units in which data can be returned"""        
+    """This enum describes the different time units in which data can be returned"""
+
     QUARTER_OF_AN_HOUR = "QUARTER_OF_AN_HOUR"
     HOUR = "HOUR"
     DAY = "DAY"
@@ -61,6 +64,7 @@ class SiteStatus(Enum):
     - `PENDING`: The site has been created but no data has been received yet.
     - `DISABLED`: The site is in a disabled state.
     - `ALL`: Special value indicating that all possible statuses should be returned when this is used as a parameter."""
+
     ACTIVE = "Active"
     PENDING = "Pending"
     DISABLED = "Disabled"
@@ -98,6 +102,7 @@ class Metrics(Enum):
 class InverterMode(Enum):
     """Enum describing the different modes reported by a Solaredge Inverter.
     The Enum value is the descrption of the response provided by the API."""
+
     OFF = "Off"
     SLEEPING = "Night mode"
     STARTING = "Pre-production"
@@ -126,19 +131,22 @@ class OperationMode(Enum):
 
 class APIArgs(Enum):
     """Enum containing the set of arguments used by the API endpoints."""
+
     SITEID = "siteid"
     SERIALNUMBER = "serialnumber"
 
 
 @dataclass
-class APIArguments:
+class apiargs(APIArguments):
     """Dataclass describing the set of arguments used by the API endpoints."""
-    siteid: str = None
-    serialnumber: str = None
+
+    siteid: Optional[str] = None
+    serialnumber: Optional[str] = None
 
 
 class APIParms(Enum):
     """Enum containing the set of parameters used by the API endpoints."""
+
     SIZE = "size"
     START_INDEX = "startIndex"
     SEARCH_TEXT = "searchText"
@@ -155,35 +163,37 @@ class APIParms(Enum):
     SERIALS = "serials"
     SYSTEM_UNITS = "systemUnits"
 
+
 class DateFormats(Enum):
-    DATE = '%Y-%m-%d'
-    DATETIME = '%Y-%m-%d %H:%M:%S'
+    DATE = "%Y-%m-%d"
+    DATETIME = "%Y-%m-%d %H:%M:%S"
+
 
 @dataclass
-class APIParameters:
+class apiparms(APIParameters):
     """Dataclass describing the set of parameters used by the API endpoints."""
+
     size: int = 100
     startIndex: int = 0
-    searchText: str = None
-    sortProperty: Property = None
-    sortOrder: Order = Order.ASCENDING.value
-    Status: SiteStatus = SiteStatus.ALL.value
-    api_key: str = None
-    startDate: str = (datetime.now(tz=None) -
-                      timedelta(days=1)).strftime(DateFormats.DATE.value)
+    searchText: Optional[str] = None
+    sortProperty: Optional[Property] = None
+    sortOrder: Order = Order.ASCENDING
+    Status: SiteStatus = SiteStatus.ALL
+    api_key: Optional[str] = None
+    startDate: str = (datetime.now(tz=None) - timedelta(days=1)).strftime(DateFormats.DATE.value)
     endDate: str = (datetime.now(tz=None)).strftime(DateFormats.DATE.value)
-    startTime: str = (datetime.now(tz=None)-timedelta(days=1)
-                      ).strftime(DateFormats.DATETIME.value)
+    startTime: str = (datetime.now(tz=None) - timedelta(days=1)).strftime(DateFormats.DATETIME.value)
     endTime: str = datetime.now(tz=None).strftime(DateFormats.DATETIME.value)
-    timeUnit: TimeUnit = TimeUnit.HOUR.value
-    meters: Meters = None
-    serials: str = None
-    systemUnits: Metrics = Metrics.METRIC.value
+    timeUnit: TimeUnit = TimeUnit.HOUR
+    meters: Optional[Meters] = None
+    serials: Optional[str] = None
+    systemUnits: Metrics = Metrics.METRIC
 
 
 @dataclass
 class Location(baseclass):
     """This dataclass describes the location information provided in multiple API endpoints"""
+
     country: str
     city: str
     address: str
@@ -195,6 +205,14 @@ class Location(baseclass):
 
 @dataclass
 class PrimaryModule(baseclass):
+    """Describes the primary module (panel) installed at the site.
+
+    Attributes:
+        manufacturerName: Manufacturer of the module.
+        modelName: Model identifier for the module.
+        maximumPower: Maximum power rating (kW or W as returned by API).
+        temperatureCoef: Temperature coefficient value for the module.
+    """
     manufacturerName: str
     modelName: str
     maximumPower: float
@@ -203,6 +221,11 @@ class PrimaryModule(baseclass):
 
 @dataclass
 class Uris(baseclass):
+    """Container for URI templates returned in various API responses.
+
+    These fields contain endpoint fragments or paths that can be used to
+    construct full URLs for site images, data periods, details and overview.
+    """
     SITE_IMAGE: str
     DATA_PERIOD: str
     DETAILS: str
@@ -211,8 +234,14 @@ class Uris(baseclass):
 
 @dataclass
 class PublicSettings(baseclass):
+    """Public visibility settings for a site.
+
+    Attributes:
+        isPublic: Whether the site is publicly visible.
+        name: Optional public display name for the site.
+    """
     isPublic: bool
-    name: str = None
+    name: Optional[str] = None
 
 
 @dataclass
@@ -227,6 +256,7 @@ class Site(baseclass):
         uris, publicSettings
 
         alertQuantity and alertSeverity which may not be returned"""
+
     id: int
     name: str
     accountId: int
@@ -243,48 +273,63 @@ class Site(baseclass):
     uris: Uris
     publicSettings: PublicSettings
     alertQuantity: int = 0
-    alertSeverity: str = None
+    alertSeverity: Optional[str] = None
 
 
 @dataclass
 class SiteList(baseclass):
     """This dataclass describes the list of sites provided by the Sites API endpoint
-        Attributes: count - count of sites
-                    site - a list of site information"""
+    Attributes: count - count of sites
+                site - a list of site information"""
+
     count: int
-    site: list[Site]
+    site: list[Site] = field(default_factory=list)
 
 
 @dataclass
 class SitesResponse(baseclass):
     """This dataclass describes the response from the Sites API endpoint"""
+
     sites: SiteList
 
 
-Sites = Endpoint(endpoint="sites/list",
-                 name="Site List",
-                 parms=[APIParms.API_KEY, APIParms.SIZE, APIParms.START_INDEX, APIParms.SEARCH_TEXT,
-                        APIParms.SORT_PROPERTY, APIParms.SORT_ORDER, APIParms.STATUS],
-                 sample="site_list.json",
-                 response=SitesResponse)
+Sites = Endpoint(
+    endpoint="sites/list",
+    name="Site List",
+    parms=[
+        APIParms.API_KEY,
+        APIParms.SIZE,
+        APIParms.START_INDEX,
+        APIParms.SEARCH_TEXT,
+        APIParms.SORT_PROPERTY,
+        APIParms.SORT_ORDER,
+        APIParms.STATUS,
+    ],
+    sample="site_list.json",
+    response=SitesResponse,
+)
 
 
 @dataclass
 class SiteInfoResponse(baseclass):
     """This dataclass describes the response from the SiteInfo API endpoint"""
+
     details: Site
 
 
-SiteInfo = Endpoint(endpoint="site/{siteid}/details",
-                    name="Site Details",
-                    arguments=[APIArgs.SITEID],
-                    parms=[APIParms.API_KEY],
-                    response=SiteInfoResponse)
+SiteInfo = Endpoint(
+    endpoint="site/{siteid}/details",
+    name="Site Details",
+    arguments=[APIArgs.SITEID],
+    parms=[APIParms.API_KEY],
+    response=SiteInfoResponse,
+)
 
 
 @dataclass
 class GasEmissionSaved(baseclass):
-    """This dataclass describes the gas emissions savings returned by the SiteBenefits API"""        
+    """This dataclass describes the gas emissions savings returned by the SiteBenefits API"""
+
     units: str
     co2: float
     so2: float
@@ -293,7 +338,8 @@ class GasEmissionSaved(baseclass):
 
 @dataclass
 class EnvBenefits(baseclass):
-    """This dataclass describes the environmental benefits returned by the SiteBenefits API"""    
+    """This dataclass describes the environmental benefits returned by the SiteBenefits API"""
+
     gasEmissionSaved: GasEmissionSaved
     treesPlanted: float
     lightBulbs: float
@@ -302,38 +348,46 @@ class EnvBenefits(baseclass):
 @dataclass
 class EnvBenefitsResponse(baseclass):
     """This dataclass describes the initial response for the SiteBenefits API"""
+
     envBenefits: EnvBenefits
 
 
-SiteBenefits = Endpoint(endpoint="site/{siteid}/envBenefits",
-                        name="Site Environmental Benefits",
-                        arguments=[APIArgs.SITEID],
-                        parms=[APIParms.API_KEY],
-                        response=EnvBenefitsResponse)
+SiteBenefits = Endpoint(
+    endpoint="site/{siteid}/envBenefits",
+    name="Site Environmental Benefits",
+    arguments=[APIArgs.SITEID],
+    parms=[APIParms.API_KEY],
+    response=EnvBenefitsResponse,
+)
 
-SiteImage = Endpoint(endpoint="site/{siteid}/siteimage/{name}",
-                     name="Site Image",
-                     arguments=[APIArgs.SITEID],
-                     parms=[APIParms.API_KEY],
-                     response=str)
+SiteImage = Endpoint(
+    endpoint="site/{siteid}/siteimage/{name}",
+    name="Site Image",
+    arguments=[APIArgs.SITEID],
+    parms=[APIParms.API_KEY],
+    response=str,
+)
 
 
 @dataclass
 class Summary(baseclass):
-    """This dataclass describes the historical summary data returned by the SiteOverview API"""           
+    """This dataclass describes the historical summary data returned by the SiteOverview API"""
+
     energy: float
-    revenue: float = None
+    revenue: Optional[float] = None
 
 
 @dataclass
 class CurrentPower(baseclass):
-    """This dataclass describes the current power data returned by the SiteOverview API"""       
+    """This dataclass describes the current power data returned by the SiteOverview API"""
+
     power: float
 
 
 @dataclass
 class OverviewData(baseclass):
-    """This dataclass describes the energy overview data returned by the SiteOverview API"""     
+    """This dataclass describes the energy overview data returned by the SiteOverview API"""
+
     lastUpdateTime: datetime
     lifeTimeData: Summary
     lastYearData: Summary
@@ -345,21 +399,25 @@ class OverviewData(baseclass):
 
 @dataclass
 class OverviewResponse(baseclass):
-    """This dataclass describes the initial response for the SiteOverview API"""       
+    """This dataclass describes the initial response for the SiteOverview API"""
+
     overview: OverviewData
 
 
-SiteOverview = Endpoint(endpoint="site/{siteid}/overview",
-                        name="Site Overview",
-                        arguments=[APIArgs.SITEID],
-                        parms=[APIParms.API_KEY],
-                        response=OverviewResponse)
+SiteOverview = Endpoint(
+    endpoint="site/{siteid}/overview",
+    name="Site Overview",
+    arguments=[APIArgs.SITEID],
+    parms=[APIParms.API_KEY],
+    response=OverviewResponse,
+)
 
 
 @dataclass
 class DataPeriod(baseclass):
     """This dataclass describes the data period returned by the SiteDataPeriod API
-        Atttributes: startDate, endDate"""    
+    Atttributes: startDate, endDate"""
+
     startDate: datetime
     endDate: datetime
 
@@ -367,34 +425,39 @@ class DataPeriod(baseclass):
 @dataclass
 class SiteDataPeriodResponse(baseclass):
     """This dataclass describes the initial response for the SiteDataPeriod API
-        Atttributes: dataPeriod"""
+    Atttributes: dataPeriod"""
+
     dataPeriod: DataPeriod
 
 
-SiteDataPeriod = Endpoint(endpoint="site/{siteid}/dataPeriod",
-                          name="Site Data: Start and End Dates",
-                          arguments=[APIArgs.SITEID],
-                          parms=[APIParms.API_KEY],
-                          response=SiteDataPeriodResponse)
+SiteDataPeriod = Endpoint(
+    endpoint="site/{siteid}/dataPeriod",
+    name="Site Data: Start and End Dates",
+    arguments=[APIArgs.SITEID],
+    parms=[APIParms.API_KEY],
+    response=SiteDataPeriodResponse,
+)
 
 
 @dataclass
 class Value(baseclass):
     date: datetime
-    value: float = float(0)
+    value: float = 0.0
 
     def __post_init__(self):
-        super().__post_init__()
+        # Call parent's __post_init__ if it exists
+        if hasattr(super(), "__post_init__"):
+            super().__post_init__()        
         if self.value is None:
-            self.value = float(0)
+            self.value = 0.0
 
 
 @dataclass
 class EnergyData(baseclass):
     timeUnit: TimeUnit
     unit: str
-    measuredBy: str
-    values: List[Value]
+    values: list[Value] = field(default_factory=list)
+    measuredBy: Optional[str] = None
 
 
 @dataclass
@@ -402,13 +465,14 @@ class EnergyDataResponse(baseclass):
     energy: EnergyData
 
 
-SiteEnergy = Endpoint(endpoint="site/{siteid}/energy",
-                      name="Site Energy",
-                      arguments=[APIArgs.SITEID],
-                      parms=[APIParms.API_KEY, APIParms.START_DATE,
-                             APIParms.END_DATE, APIParms.TIME_UNIT],
-                      sample="site_energy.json",
-                      response=EnergyDataResponse)
+SiteEnergy = Endpoint(
+    endpoint="site/{siteid}/energy",
+    name="Site Energy",
+    arguments=[APIArgs.SITEID],
+    parms=[APIParms.API_KEY, APIParms.START_DATE, APIParms.END_DATE, APIParms.TIME_UNIT],
+    sample="site_energy.json",
+    response=EnergyDataResponse,
+)
 
 
 @dataclass
@@ -432,90 +496,104 @@ class TimeFrameEnergyResponse(baseclass):
     timeFrameEnergy: TimeFrameEnergyData
 
 
-SiteEnergyTimeframe = Endpoint(endpoint="site/{siteid}/timeFrameEnergy",
-                               name="Site Energy - Time Period",
-                               arguments=[APIArgs.SITEID],
-                               parms=[APIParms.API_KEY,
-                                      APIParms.START_DATE, APIParms.END_DATE],
-                               response=TimeFrameEnergyResponse)
+SiteEnergyTimeframe = Endpoint(
+    endpoint="site/{siteid}/timeFrameEnergy",
+    name="Site Energy - Time Period",
+    arguments=[APIArgs.SITEID],
+    parms=[APIParms.API_KEY, APIParms.START_DATE, APIParms.END_DATE],
+    response=TimeFrameEnergyResponse,
+)
 
 
 @dataclass
 class DataType(baseclass):
     """This dataclass describes a list of information retuened by various API endpoints
-        Attrributes: type - the type of data in the list
-                     values - a list of values of this type"""    
+    Attrributes: type - the type of data in the list
+                 values - a list of values of this type"""
+
     type: str
-    values: List[Value]
+    values: list[Value] = field(default_factory=list)
 
 
 @dataclass
 class DetailData(baseclass):
-    """ This dataclass defines the response to the PowerDetail API request
+    """This dataclass defines the response to the PowerDetail API request
 
     Atttributes:
         timeUnit: The granularity of the data returned
         unit: The unit of the data returned
         meters: A list of different types of data that is returned
-        """
+    """
+
     timeUnit: TimeUnit
     unit: str
-    meters: List[DataType]
+    meters: list[DataType] = field(default_factory=list)
 
 
 @dataclass
 class EnergyDetailResponse(baseclass):
-    """This dataclass describes the response from the EnergyDetails API endpoint"""    
+    """This dataclass describes the response from the EnergyDetails API endpoint"""
+
     energyDetails: DetailData
 
 
-EnergyDetails = Endpoint(endpoint="site/{siteid}/energyDetails",
-                         name="Site Energy - Details",
-                         arguments=[APIArgs.SITEID],
-                         parms=[APIParms.API_KEY, APIParms.START_TIME, APIParms.END_TIME,
-                                APIParms.TIME_UNIT, APIParms.METERS],
-                         response=EnergyDetailResponse)
+EnergyDetails = Endpoint(
+    endpoint="site/{siteid}/energyDetails",
+    name="Site Energy - Details",
+    arguments=[APIArgs.SITEID],
+    parms=[APIParms.API_KEY, APIParms.START_TIME, APIParms.END_TIME, APIParms.TIME_UNIT, APIParms.METERS],
+    response=EnergyDetailResponse,
+)
 
 
 @dataclass
 class PowerDetailsResponse(baseclass):
     """This dataclass describes the response from the Power Details API endpoint"""
+
     powerDetails: DetailData
 
 
-PowerDetails = Endpoint(endpoint="site/{siteid}/powerDetails",
-                        name="Site Power - Details",
-                        arguments=[APIArgs.SITEID],
-                        parms=[APIParms.API_KEY, APIParms.START_TIME,
-                               APIParms.END_TIME, APIParms.METERS],
-                        response=PowerDetailsResponse)
+PowerDetails = Endpoint(
+    endpoint="site/{siteid}/powerDetails",
+    name="Site Power - Details",
+    arguments=[APIArgs.SITEID],
+    parms=[APIParms.API_KEY, APIParms.START_TIME, APIParms.END_TIME, APIParms.METERS],
+    response=PowerDetailsResponse,
+)
 
 
 @dataclass
 class PowerData(baseclass):
-    
     timeUnit: TimeUnit
     unit: str
     measuredBy: str
-    values: List[Value]
+    values: list[Value] = field(default_factory=list)
 
 
 @dataclass
 class PowerDataResponse(baseclass):
-    """This dataclass is the intial response from the PowerData API endpoint"""      
+    """This dataclass is the intial response from the PowerData API endpoint"""
+
     power: PowerData
 
 
-Power = Endpoint(endpoint="site/{siteid}/power",
-                 name="Site Power",
-                 arguments=[APIArgs.SITEID],
-                 parms=[APIParms.API_KEY, APIParms.START_TIME, APIParms.END_TIME],
-                 response=PowerDataResponse)
+Power = Endpoint(
+    endpoint="site/{siteid}/power",
+    name="Site Power",
+    arguments=[APIArgs.SITEID],
+    parms=[APIParms.API_KEY, APIParms.START_TIME, APIParms.END_TIME],
+    response=PowerDataResponse,
+)
 
 
 @dataclass_json
 @dataclass
 class Connection:
+    """Represents a power connection between two points in the powerflow.
+
+    The JSON fields are named `from` and `to`, but the dataclass uses
+    `from_` and `to_` to avoid using the Python keyword `from`.
+    """
     from_: str = field(metadata=config(field_name="from"))
     to_: str = field(metadata=config(field_name="to"))
 
@@ -531,24 +609,26 @@ class PowerDetailInfo(baseclass):
 @dataclass
 class SiteCurrentPowerFlow(baseclass):
     unit: str
-    connections: List[Connection]
     GRID: PowerDetailInfo
     LOAD: PowerDetailInfo
     PV: PowerDetailInfo
     STORAGE: PowerDetailInfo
-
+    connections: list[Connection] = field(default_factory=list)
 
 @dataclass
 class PowerFlowResponse(baseclass):
-    """This dataclass is the intial response from the PowerFlow API endpoint"""    
+    """This dataclass is the intial response from the PowerFlow API endpoint"""
+
     siteCurrentPowerFlow: SiteCurrentPowerFlow
 
 
-PowerFlow = Endpoint(endpoint="site/{siteid}/currentPowerFlow",
-                     name="Site Power Flow",
-                     arguments=[APIArgs.SITEID],
-                     parms=[APIParms.API_KEY],
-                     response=PowerFlowResponse)
+PowerFlow = Endpoint(
+    endpoint="site/{siteid}/currentPowerFlow",
+    name="Site Power Flow",
+    arguments=[APIArgs.SITEID],
+    parms=[APIParms.API_KEY],
+    response=PowerFlowResponse,
+)
 
 
 @dataclass
@@ -569,13 +649,13 @@ class Battery(baseclass):
     serialNumber: str
     modelNumber: str
     telemetryCount: int
-    telemetries: List[BatteryTelemetry]
+    telemetries: list[BatteryTelemetry] = field(default_factory=list)
 
 
 @dataclass
 class StorageData(baseclass):
     batteryCount: int
-    batteries: List[Battery]
+    batteries: list[Battery] = field(default_factory=list)
 
 
 @dataclass
@@ -583,26 +663,29 @@ class StorageDataResponse(baseclass):
     storageData: StorageData
 
 
-Storage = Endpoint(endpoint="site/{siteid}/storageData",
-                   name="Battery Telemetry",
-                   arguments=[APIArgs.SITEID],
-                   parms=[APIParms.API_KEY, APIParms.START_TIME,
-                          APIParms.END_TIME, APIParms.SERIALS],
-                   response=StorageDataResponse)
+Storage = Endpoint(
+    endpoint="site/{siteid}/storageData",
+    name="Battery Telemetry",
+    arguments=[APIArgs.SITEID],
+    parms=[APIParms.API_KEY, APIParms.START_TIME, APIParms.END_TIME, APIParms.SERIALS],
+    response=StorageDataResponse,
+)
 
 
 @dataclass
 class Meter(baseclass):
-    """This dataclass describes the meter information provided by the Inventory API Endpoint"""    
+    """This dataclass describes the meter information provided by the Inventory API Endpoint"""
+
     name: str
     manufacturer: str
     model: str
-    SN: str = None
+    SN: Optional[str] = None
 
 
 @dataclass
 class Sensor(baseclass):
     """This dataclass describes the sensor information provided by the Inventory API Endpoint"""
+
     connectedSolaredgeDeviceSN: str
     connectedTo: str
     id: str
@@ -613,6 +696,7 @@ class Sensor(baseclass):
 @dataclass
 class Gateway(baseclass):
     """This dataclass describes the gatewayinformation provided by the Inventory API Endpoint"""
+
     name: str
     serialNumber: str
     firmwareVersion: str
@@ -621,6 +705,7 @@ class Gateway(baseclass):
 @dataclass
 class BatteryInventory(baseclass):
     """This dataclass describes the battery information provided by the Inventory API Endpoint"""
+
     name: str
     manufacturer: str
     model: str
@@ -638,13 +723,17 @@ class Inverter(baseclass):
         SN: The serial number of the inverter which is used in other API requests
 
         name, manufacturer, model, communicationMethod, cpuVersion, connectedOptimizers"""
+
     SN: str
     name: str
     manufacturer: str
     model: str
     communicationMethod: str
+    dsp1Version : str
+    dsp2Version : str
     cpuVersion: str
     connectedOptimizers: int
+    partNumber: str
 
 
 @dataclass
@@ -659,61 +748,72 @@ class InventoryData(baseclass):
         gateways : A list of the gateways that are associated with the site ID
         site : The site ID is added as an additional attribute but not returned by the API
     """
-    meters: list[Meter]
-    sensors: list[Sensor]
-    gateways: list[Gateway]
-    batteries: list[BatteryInventory]
-    inverters: list[Inverter]
-    site: str = None
+
+    meters: list[Meter] = field(default_factory=list)
+    sensors: list[Sensor] = field(default_factory=list)
+    gateways: list[Gateway] = field(default_factory=list)
+    batteries: list[BatteryInventory] = field(default_factory=list)
+    inverters: list[Inverter] = field(default_factory=list)
+    site: Optional[str] = None
 
 
 @dataclass
 class InventoryResponse(baseclass):
     """This dataclass describes the response from the Inventory API endpoint"""
+
     Inventory: InventoryData
 
 
-Inventory = Endpoint(endpoint="site/{siteid}/inventory",
-                     name="Site Inventory",
-                     arguments=[APIArgs.SITEID],
-                     parms=[APIParms.API_KEY],
-                     response=InventoryResponse)
+Inventory = Endpoint(
+    endpoint="site/{siteid}/inventory",
+    name="Site Inventory",
+    arguments=[APIArgs.SITEID],
+    parms=[APIParms.API_KEY],
+    response=InventoryResponse,
+)
 
 
 @dataclass
 class ComponentEntry(baseclass):
     """This dataclass describes the component data provided by the Components API Endpoint"""
+
     name: str
     manufacturer: str
     model: str
     serialNumber: str
     kWpDC: str
-    site: str = None
+    site: Optional[str] = None
 
 
 @dataclass
 class ComponentList(baseclass):
     """This dataclass describes the information provided by the Components API Endpoint"""
+
     count: int
-    list: list[ComponentEntry]
+    list: list[ComponentEntry] 
 
 
 @dataclass
 class ComponentsResponse(baseclass):
     """This dataclass describes the response from the Components API endpoint"""
+
     reporters: ComponentList
 
 
-Components = Endpoint(endpoint="equipment/{siteid}/list",
-                      name="Site Components",
-                      arguments=[APIArgs.SITEID],
-                      parms=[APIParms.API_KEY],
-                      response=ComponentsResponse)
+# This endpoint returns a list of equipment/components for a given site, including details such as name, manufacturer, model, serial number, and kWpDC.
+Components = Endpoint(
+    endpoint="equipment/{siteid}/list",
+    name="Site Components",
+    arguments=[APIArgs.SITEID],
+    parms=[APIParms.API_KEY],
+    response=ComponentsResponse
+)
 
 
 @dataclass
 class LData(baseclass):
     """This dataclass describes the phase information as part of the inverter telemetry."""
+
     acCurrent: float
     acVoltage: float
     acFrequency: float
@@ -726,6 +826,7 @@ class LData(baseclass):
 @dataclass
 class Telemetry(baseclass):
     """This dataclass describes the telemetry information provided for the inverter."""
+
     date: datetime
     totalActivePower: float
     powerLimit: float
@@ -733,70 +834,78 @@ class Telemetry(baseclass):
     temperature: float
     inverterMode: InverterMode
     operationMode: int
-    groundFaultResistance: float = 0
-    vL1To2: float = 0
-    vL2To3: float = 0
-    vL3To1: float = 0
-    dcVoltage: float = 0
-    L1Data: LData = None
-    L2Data: LData = None
-    L3Data: LData = None
+    groundFaultResistance: Optional[float] = 0.0
+    vL1To2: Optional[float] = 0.0
+    vL2To3: Optional[float] = 0.0
+    vL3To1: Optional[float] = 0.0
+    dcVoltage: Optional[float] = 0.0
+    L1Data: Optional[LData] = None
+    L2Data: Optional[LData] = None
+    L3Data: Optional[LData] = None
 
 
 @dataclass
 class InverterInfo(baseclass):
     """This dataclass describes the information provided by the InverterTelemetry API Endpoint"""
+
     count: int
-    telemetries: List[Telemetry]
+    telemetries: list[Telemetry] = field(default_factory=list)
 
 
 @dataclass
 class InverterResponse(baseclass):
     """This dataclass describes the response from the InverterTelemetry API endpoint"""
+
     data: InverterInfo
 
 
-InverterTelemetry = Endpoint(endpoint="equipment/{siteid}/{serialnumber}/data",
-                             name="Inverter Technical Data",
-                             arguments=[APIArgs.SITEID, APIArgs.SERIALNUMBER],
-                             parms=[APIParms.API_KEY, APIParms.START_TIME, APIParms.END_TIME],
-                             response=InverterResponse)
+InverterTelemetry = Endpoint(
+    endpoint="equipment/{siteid}/{serialnumber}/data",
+    name="Inverter Technical Data",
+    arguments=[APIArgs.SITEID, APIArgs.SERIALNUMBER],
+    parms=[APIParms.API_KEY, APIParms.START_TIME, APIParms.END_TIME],
+    response=InverterResponse,
+)
 
 
 @dataclass
 class Version(baseclass):
     """This dataclass describes the version information provided by Version and Supported Versions API endpoint
-        Attributes : release"""        
+    Attributes : release"""
+
     release: str
 
 
 @dataclass
 class VersionResponse(baseclass):
-    """This dataclass describes the response from the Version API endpoint"""    
+    """This dataclass describes the response from the Version API endpoint"""
+
     version: Version
 
 
-CurrentVersion = Endpoint(endpoint="version/current",
-                          name="Current Version",
-                          parms=[APIParms.API_KEY],
-                          response=VersionResponse)
+CurrentVersion = Endpoint(
+    endpoint="version/current", name="Current Version", parms=[APIParms.API_KEY], response=VersionResponse
+)
 
 
 @dataclass
 class VersionsResponse(baseclass):
-    supported: List[Version]
+    """This dataclass describes the response from the SupportedVersions API endpoint"""
+
+    supported: list[Version] = field(default_factory=list)
 
 
-SupportedVersions = Endpoint(endpoint="version/supported",
-                             name="Supported Vesions",
-                             parms=[APIParms.API_KEY],
-                             response=VersionsResponse)
+
+SupportedVersions = Endpoint(
+    endpoint="version/supported", name="Supported Versions", parms=[APIParms.API_KEY], response=VersionsResponse
+)
 
 
 class ConstantList(Enum):
     """This enum lists all the defined constant, making it easy to reference them.
     The Enum value is the instance of the constant.
     """
+
     TimeUnit = TimeUnit
     Unit = Unit
     Order = Order
@@ -814,6 +923,7 @@ class APIList(Enum):
     """This enum lists all the defined API endpoints, making it easy to reference them.
     The Enum value is the instance of the Endpoint class that describes the endpoint.
     """
+
     Sites = Sites
     SiteInfo = SiteInfo
     SiteBenefits = SiteBenefits
@@ -833,10 +943,38 @@ class APIList(Enum):
     CurrentVersion = CurrentVersion
     SupportedVersions = SupportedVersions
 
+@dataclass
+class responses(APIResponses):
+    """Maps API endpoints to their response classes.
+
+    This dataclass is used by the `RESTClient` configuration to know which
+    dataclass should be used to parse each API endpoint's JSON response.
+    """
+    Sites: SitesResponse
+    SiteInfo: SiteInfoResponse
+    SiteBenefits: EnvBenefitsResponse
+    SiteImage: str
+    SiteOverview: OverviewResponse
+    SiteDataPeriod: SiteDataPeriodResponse
+    SiteEnergy: EnergyDataResponse
+    SiteEnergyTimeframe: TimeFrameEnergyResponse
+    EnergyDetails: EnergyDetailResponse
+    Power: PowerDataResponse
+    PowerDetails: PowerDetailsResponse
+    PowerFlow: PowerFlowResponse
+    Storage: StorageDataResponse
+    Inventory: InventoryResponse
+    Components: ComponentsResponse
+    InverterTelemetry: InverterResponse
+    CurrentVersion: VersionResponse
+    SupportedVersions: VersionsResponse
+
+
 
 @dataclass
 class SummaryData:
     """This dataclass is used to store data returned by multiple calls to the REST API."""
+
     sites: list[Site] = field(default_factory=list)
     inventories: list[InventoryData] = field(default_factory=list)
     components: list[ComponentEntry] = field(default_factory=list)
@@ -847,7 +985,8 @@ Solaredge = RESTClient(
     url="https://monitoringapi.solaredge.com",
     auth=None,
     apilist=APIList,
-    arguments=APIArguments(),
-    parameters=APIParameters(),
-    constants=ConstantList
+    arguments=apiargs(),
+    parameters = apiparms(),
+    constants = ConstantList,
+    responses=responses
 )

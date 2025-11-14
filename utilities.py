@@ -8,6 +8,8 @@ from contextlib import contextmanager
 import influxdb
 from dotenv import dotenv_values
 
+__all__ = ["InfluxConnection", "get_logger", "get_env"]
+
 
 def get_logger(destination: str = "stdout"):
     """Creates a logger instance of the desired type"""
