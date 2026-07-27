@@ -13,7 +13,9 @@ dependencies = [
     "dateutil",
     "dataclasses_json",
 ]
-authors = [{ name = "Nick Clayton", email = "xxx@gmail.com" }]
+authors = [
+  { name="Nick Clayton"},
+]
 description = "API for Solaredge devices"
 readme = "README.md"
 requires-python = ">=3.9"
