@@ -18,7 +18,7 @@ dependencies = [
     "dataclasses_json",
 ]
 authors = [
-  { name="Nick Clayton", email="nick.m.clayton@gmail.com" },
+  { name="Nick Clayton"},
 ]
 description = "API for Solaredge devices"
 readme = "README.md"
