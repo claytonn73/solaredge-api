@@ -8,10 +8,11 @@ import logging
 from dataclasses import dataclass, field, fields, is_dataclass
 from datetime import date, datetime, time
 from enum import Enum
-from typing import List, Optional, Type, get_args, get_origin, Any
+from typing import List, Optional, Type, get_args, get_origin, Any, Union
 
 import ciso8601
 
+logger = logging.getLogger(__name__)
 
 @dataclass
 class baseclass:
@@ -22,7 +23,7 @@ class baseclass:
         """ Parse only keywords that are defined in the dataclass definition"""
         for k in kwargs:
             if k not in cls.__match_args__:
-                self.logger.error("%s got an unexpected keyword argument %s", cls.__name__, k)
+                logger.error("%s got an unexpected keyword argument %s", cls.__name__, k)
         return cls(**{k: kwargs[k] for k in kwargs if k in cls.__match_args__})
 
 
@@ -36,21 +37,26 @@ class baseclass:
         except TypeError:
             return entry_value
 
+    def is_optional(self, field):
+        return get_origin(field) is Union and \
+            type(None) in get_args(field)
+
     def __post_init__(self) -> None:
-        self.logger = logging.getLogger(__name__)
 
         for entry in fields(self):
             entry_value = getattr(self, entry.name)
             if entry_value is None:
                 continue
             entry_type = entry.type
+            if (get_origin(entry_type) is Union):
+                entry_type = get_args(entry_type)[0]
             # Order of checks is based on frequency of data within API responses
             # If the entry type is datetime then convert it from a string to a datetime object
             if entry_type is datetime:
                 setattr(self, entry.name, ciso8601.parse_datetime(entry_value))
             elif entry_type in {float, str, int, bool}:
                 continue
-            elif issubclass(entry_type.__class__, range):            
+            elif entry_type is range or isinstance(entry_value, range):
                 continue
             # If the entry type is date then convert it from a string to a date object
             elif entry_type is date:
@@ -60,16 +66,18 @@ class baseclass:
                 setattr(self, entry.name, ciso8601.parse_datetime(entry_value).time())
             # If the entry type is a list
             elif get_origin(entry_type) is list:
-                list_type = get_args(entry_type)[0]
+                list_type : Type = get_args(entry_type)[0]
                 # If the type of the list entry is a dataclass then parse each entry of the list into the dataclass
                 if (is_dataclass(list_type)) and (bool(entry_value)):
                     for index, data in enumerate(entry_value):
                         entry_value[index] = self.parse_kwargs(list_type, **(data))
                 # If the type of the list entry is an Enum then convert it to an Enum entry
-                ###needs working on
                 elif issubclass(list_type, Enum):
-                    for index, data in enumerate(entry_value):   
-                        setattr(self,entry_value[index], self.process_enum(list_type, entry_value[data]))                                         
+                    setattr(
+                        self,
+                        entry.name,
+                        [self.process_enum(list_type, data) for data in entry_value],
+                    )
             # If the entry type is a dataclass and the entry is not null then parse the entry into the dataclass
             elif (is_dataclass(entry_type)) and (bool(entry_value)):
                 setattr(
@@ -142,7 +150,7 @@ class RESTClient:
     url: str
     responses: Type[APIResponses]    
     apilist: Type[Enum]    
-    parameters: Optional[APIParameters] = None
-    arguments: Optional[APIArguments] = None
+    parameters: Optional[Any] = None
+    arguments: Optional[Any] = None
     auth: Optional[str] = None
     constants: Optional[Type[Enum]] = None

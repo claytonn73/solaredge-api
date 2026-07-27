@@ -21,17 +21,18 @@ The Solaredge instance of the RESTClient is configured to interact with the Sola
 
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
-from enum import Enum
+from enum import Enum, IntEnum, StrEnum
 from typing import List, Optional, Type
 
 from dataclasses_json import config, dataclass_json
 
-import solaredge.apiconstruct
-from solaredge.apiconstruct import Endpoint, RESTClient, baseclass, APIParameters, APIArguments, APIResponses
+from solaredge.apiconstruct import (APIArguments, APIParameters, APIResponses,
+                                    Endpoint, baseclass)
 
 
-class TimeUnit(Enum):
-    """This enum describes the different time units in which data can be returned"""
+class TimeUnit(StrEnum):
+    """This enum describes the different time units in which data can be returned.
+    """
 
     QUARTER_OF_AN_HOUR = "QUARTER_OF_AN_HOUR"
     HOUR = "HOUR"
@@ -41,29 +42,37 @@ class TimeUnit(Enum):
     YEAR = "YEAR"
 
 
-class Unit(Enum):
+class Unit(StrEnum):
+    """Enumeration of unit types for energy and power measurements.
+    """
     WATT = "W"
     WATT_HOUR = "Wh"
 
-
-class Currency(Enum):
+    
+class Currency(StrEnum):
+    """Enumeration of supported currency types for site financial data.
+    """
     EUR = "Euro"
     GBP = "Pounds Sterling"
     USD = "US Dollar"
 
 
-class Order(Enum):
+class Order(StrEnum):
+    """Enumeration of sorting order options for API queries.
+    """
     ASCENDING = "ASC"
     DESCENDING = "DESC"
 
 
-class SiteStatus(Enum):
+class SiteStatus(StrEnum):
     """Enumeration representing the status of a site.
+
     Possible values:
     - `ACTIVE`: The site is in an active state.
     - `PENDING`: The site has been created but no data has been received yet.
     - `DISABLED`: The site is in a disabled state.
-    - `ALL`: Special value indicating that all possible statuses should be returned when this is used as a parameter."""
+    - `ALL`: Special value indicating that all possible statuses should be returned when this is used as a parameter.
+    """
 
     ACTIVE = "Active"
     PENDING = "Pending"
@@ -71,7 +80,11 @@ class SiteStatus(Enum):
     ALL = "All"
 
 
-class Property(Enum):
+class Property(StrEnum):
+    """Enumeration of site property fields used in API requests and responses.
+
+    This enum lists the available site attributes that can be referenced for sorting, filtering, or display.
+    """
     NAME = "Name"
     COUNTRY = "Country"
     STATE = "State"
@@ -86,7 +99,11 @@ class Property(Enum):
     CREATIONTIME = "CreationTime"
 
 
-class Meters(Enum):
+class Meters(StrEnum):
+    """Enumeration of meter types for site energy and power data.
+
+    This enum specifies the different categories of energy measurement available from the API.
+    """
     PRODUCTION = "Production"
     CONSUMPTION = "Consumption"
     SELFCONSUMPTION = "SelfConsumption"
@@ -94,12 +111,16 @@ class Meters(Enum):
     PURCHASED = "Purchased"
 
 
-class Metrics(Enum):
+class Metrics(StrEnum):
+    """Enumeration of measurement systems for returned data.
+
+    This enum specifies whether data is provided in metric or imperial units.
+    """
     METRIC = "Metric"
     IMPERIAL = "Imperial"
 
 
-class InverterMode(Enum):
+class InverterMode(StrEnum):
     """Enum describing the different modes reported by a Solaredge Inverter.
     The Enum value is the descrption of the response provided by the API."""
 
@@ -123,13 +144,18 @@ class InverterMode(Enum):
     LOCKED_INTERNAL = "Inverter lock due to an undisclosed internal reason"
 
 
-class OperationMode(Enum):
-    ON_GRID = 1
-    OFF_GRID_PV_BATTERY = 2
-    OFF_GRID_GENERATOR = 3
+class OperationMode(IntEnum):
+    """Integer-backed enum for solar inverter operation modes.
+
+    This enum maps the numeric mode codes returned by the SolarEdge API to
+    named constants.
+    """
+    ON_GRID = 0
+    OFF_GRID_PV_BATTERY = 1
+    OFF_GRID_GENERATOR = 2
 
 
-class APIArgs(Enum):
+class APIArgs(StrEnum):
     """Enum containing the set of arguments used by the API endpoints."""
 
     SITEID = "siteid"
@@ -138,13 +164,18 @@ class APIArgs(Enum):
 
 @dataclass
 class apiargs(APIArguments):
-    """Dataclass describing the set of arguments used by the API endpoints."""
+    """Dataclass describing the set of arguments used by the API endpoints.
+    
+    Attributes:
+        siteid: The ID of the site for which to retrieve data.
+        serialnumber: The serial number of the inverter for which to retrieve data.
+    """
 
-    siteid: Optional[str] = None
+    siteid: Optional[int] = None
     serialnumber: Optional[str] = None
 
 
-class APIParms(Enum):
+class APIParms(StrEnum):
     """Enum containing the set of parameters used by the API endpoints."""
 
     SIZE = "size"
@@ -164,26 +195,46 @@ class APIParms(Enum):
     SYSTEM_UNITS = "systemUnits"
 
 
-class DateFormats(Enum):
+class DateFormats(StrEnum):
+    """Enumeration of date and datetime formats used in API requests and responses.
+
+    This enum specifies the string formatting patterns for dates and datetimes.
+    """
     DATE = "%Y-%m-%d"
+    MONTH = "%Y %m"
+    YEAR = "%Y"
     DATETIME = "%Y-%m-%d %H:%M:%S"
+    DATETIMET = '%Y-%m-%dT%H:%MZ'
 
 
 @dataclass
 class apiparms(APIParameters):
-    """Dataclass describing the set of parameters used by the API endpoints."""
+    """Parameters that may be passed to any SolarEdge endpoint.
 
-    size: int = 100
+    **Important**: the original implementation evaluated ``datetime.now()`` at
+    import time, which meant the defaults drifted as soon as the module was
+    imported.  By using ``default_factory`` we recompute each time an instance
+    is created.
+    """
+    size : int = 100
     startIndex: int = 0
     searchText: Optional[str] = None
     sortProperty: Optional[Property] = None
     sortOrder: Order = Order.ASCENDING
     Status: SiteStatus = SiteStatus.ALL
     api_key: Optional[str] = None
-    startDate: str = (datetime.now(tz=None) - timedelta(days=1)).strftime(DateFormats.DATE.value)
-    endDate: str = (datetime.now(tz=None)).strftime(DateFormats.DATE.value)
-    startTime: str = (datetime.now(tz=None) - timedelta(days=1)).strftime(DateFormats.DATETIME.value)
-    endTime: str = datetime.now(tz=None).strftime(DateFormats.DATETIME.value)
+    startDate: str = field(
+        default_factory=lambda: (datetime.now() - timedelta(days=1)).strftime(DateFormats.DATE.value)
+    )
+    endDate: str = field(
+        default_factory=lambda: datetime.now().strftime(DateFormats.DATE.value)
+    )
+    startTime: str = field(
+        default_factory=lambda: (datetime.now() - timedelta(days=1)).strftime(DateFormats.DATETIME.value)
+    )
+    endTime: str = field(
+        default_factory=lambda: datetime.now().strftime(DateFormats.DATETIME.value)
+    )
     timeUnit: TimeUnit = TimeUnit.HOUR
     meters: Optional[Meters] = None
     serials: Optional[str] = None
@@ -192,7 +243,19 @@ class apiparms(APIParameters):
 
 @dataclass
 class Location(baseclass):
-    """This dataclass describes the location information provided in multiple API endpoints"""
+    """This dataclass describes the location information provided in multiple API endpoints
+    
+    Attributes:
+        country: The country where the site is located.
+        city: The city where the site is located.
+        address: The street address of the site.
+        address2: An optional second line for the street address.
+        zip: The postal code for the site.
+        timeZone: The time zone of the site.
+        state: The state where the site is located - not on details API call
+        latitude: The latitude coordinate of the site  - only on details API call
+        longitude: The longitude coordinate of the site  - only on details API call
+        """
 
     country: str
     city: str
@@ -201,6 +264,9 @@ class Location(baseclass):
     zip: str
     timeZone: str
     countryCode: str
+    state: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
 
 
 @dataclass
@@ -226,10 +292,10 @@ class Uris(baseclass):
     These fields contain endpoint fragments or paths that can be used to
     construct full URLs for site images, data periods, details and overview.
     """
-    SITE_IMAGE: str
     DATA_PERIOD: str
     DETAILS: str
     OVERVIEW: str
+    SITE_IMAGE: Optional[str] = None    
 
 
 @dataclass
@@ -251,11 +317,11 @@ class Site(baseclass):
     Attributes:
         id: The Site ID which is used as a parameter in other API requests
 
-        name, accountId, status, peakPower, lastUpdateTime, currency,
+        name, accountId, status, peakPower, lastUpdateTime, 
         installationDate, ptoDate, notes, type, location, primaryModule,
         uris, publicSettings
 
-        alertQuantity and alertSeverity which may not be returned"""
+        curremcy, alertQuantity and alertSeverity which may not be returned"""
 
     id: int
     name: str
@@ -263,8 +329,8 @@ class Site(baseclass):
     status: SiteStatus
     peakPower: float
     lastUpdateTime: date
-    currency: Currency
     installationDate: date
+    highestImpact: int
     ptoDate: str
     notes: str
     type: str
@@ -273,7 +339,9 @@ class Site(baseclass):
     uris: Uris
     publicSettings: PublicSettings
     alertQuantity: int = 0
+    currency: Optional[Currency] = None
     alertSeverity: Optional[str] = None
+
 
 
 @dataclass
@@ -283,12 +351,14 @@ class SiteList(baseclass):
                 site - a list of site information"""
 
     count: int
-    site: list[Site] = field(default_factory=list)
+    site: List[Site] = field(default_factory=list)
 
 
 @dataclass
 class SitesResponse(baseclass):
-    """This dataclass describes the response from the Sites API endpoint"""
+    """This dataclass describes the response from the Sites API endpoint
+    
+    Attributes: sites - information about the sites returned by the API"""
 
     sites: SiteList
 
@@ -328,7 +398,14 @@ SiteInfo = Endpoint(
 
 @dataclass
 class GasEmissionSaved(baseclass):
-    """This dataclass describes the gas emissions savings returned by the SiteBenefits API"""
+    """This dataclass describes the gas emissions savings returned by the SiteBenefits API
+    
+    Attributes:
+        units: The unit of measurement for the gas emissions.
+        co2: The amount of CO2 emissions saved.
+        so2: The amount of SO2 emissions saved.
+        nox: The amount of NOx emissions saved.
+    """
 
     units: str
     co2: float
@@ -338,7 +415,13 @@ class GasEmissionSaved(baseclass):
 
 @dataclass
 class EnvBenefits(baseclass):
-    """This dataclass describes the environmental benefits returned by the SiteBenefits API"""
+    """This dataclass describes the environmental benefits returned by the SiteBenefits API
+    
+    Attributes:
+        gasEmissionSaved: The gas emissions savings information.
+        treesPlanted: The equivalent number of trees planted.
+        lightBulbs: The equivalent number of light bulbs powered.
+        """
 
     gasEmissionSaved: GasEmissionSaved
     treesPlanted: float
@@ -347,7 +430,11 @@ class EnvBenefits(baseclass):
 
 @dataclass
 class EnvBenefitsResponse(baseclass):
-    """This dataclass describes the initial response for the SiteBenefits API"""
+    """This dataclass describes the initial response for the SiteBenefits API
+    
+    Attributes:
+        envBenefits: The environmental benefits information.
+    """
 
     envBenefits: EnvBenefits
 
@@ -441,27 +528,39 @@ SiteDataPeriod = Endpoint(
 
 @dataclass
 class Value(baseclass):
+    """Represents a single timestamped value for energy or power data.
+
+    This dataclass contains a datetime and its associated numeric value, used in various API responses.
+    """
     date: datetime
     value: float = 0.0
 
     def __post_init__(self):
         # Call parent's __post_init__ if it exists
         if hasattr(super(), "__post_init__"):
-            super().__post_init__()        
+            super().__post_init__()
         if self.value is None:
             self.value = 0.0
 
 
 @dataclass
 class EnergyData(baseclass):
+    """Represents energy data for a site over a specified time period.
+
+    This dataclass contains the time unit, unit type, a list of timestamped values, and the measurement source.
+    """
     timeUnit: TimeUnit
     unit: str
-    values: list[Value] = field(default_factory=list)
+    values: List[Value] = field(default_factory=list)
     measuredBy: Optional[str] = None
 
 
 @dataclass
 class EnergyDataResponse(baseclass):
+    """Represents the response from the Site Energy API endpoint.
+
+    This dataclass contains the energy data for a site, including time unit, unit type, values, and measurement source.
+    """
     energy: EnergyData
 
 
@@ -469,7 +568,8 @@ SiteEnergy = Endpoint(
     endpoint="site/{siteid}/energy",
     name="Site Energy",
     arguments=[APIArgs.SITEID],
-    parms=[APIParms.API_KEY, APIParms.START_DATE, APIParms.END_DATE, APIParms.TIME_UNIT],
+    parms=[APIParms.API_KEY, APIParms.START_DATE,
+           APIParms.END_DATE, APIParms.TIME_UNIT],
     sample="site_energy.json",
     response=EnergyDataResponse,
 )
@@ -477,6 +577,10 @@ SiteEnergy = Endpoint(
 
 @dataclass
 class EnergyValue(baseclass):
+    """Represents a single timestamped energy value for a site.
+
+    This dataclass contains a datetime, the energy value, and its unit as returned by the API.
+    """
     date: datetime
     energy: float
     unit: str
@@ -484,6 +588,10 @@ class EnergyValue(baseclass):
 
 @dataclass
 class TimeFrameEnergyData(baseclass):
+    """Represents energy data for a site over a specific time frame.
+
+    This dataclass contains the total energy, unit, measurement source, and lifetime energy values at the start and end of the period.
+    """
     energy: float
     unit: str
     measuredBy: str
@@ -493,6 +601,10 @@ class TimeFrameEnergyData(baseclass):
 
 @dataclass
 class TimeFrameEnergyResponse(baseclass):
+    """Represents the response from the Site Energy Timeframe API endpoint.
+
+    This dataclass contains energy data for a site over a specific time frame, including total energy and lifetime values.
+    """
     timeFrameEnergy: TimeFrameEnergyData
 
 
@@ -508,11 +620,12 @@ SiteEnergyTimeframe = Endpoint(
 @dataclass
 class DataType(baseclass):
     """This dataclass describes a list of information retuened by various API endpoints
+    
     Attrributes: type - the type of data in the list
                  values - a list of values of this type"""
 
     type: str
-    values: list[Value] = field(default_factory=list)
+    values: List[Value] = field(default_factory=list)
 
 
 @dataclass
@@ -527,12 +640,16 @@ class DetailData(baseclass):
 
     timeUnit: TimeUnit
     unit: str
-    meters: list[DataType] = field(default_factory=list)
+    meters: List[DataType] = field(default_factory=list)
 
 
 @dataclass
 class EnergyDetailResponse(baseclass):
-    """This dataclass describes the response from the EnergyDetails API endpoint"""
+    """This dataclass describes the response from the EnergyDetails API endpoint
+    
+    Attributes:
+        energyDetails: The detailed energy data returned by the API.
+    """
 
     energyDetails: DetailData
 
@@ -541,14 +658,18 @@ EnergyDetails = Endpoint(
     endpoint="site/{siteid}/energyDetails",
     name="Site Energy - Details",
     arguments=[APIArgs.SITEID],
-    parms=[APIParms.API_KEY, APIParms.START_TIME, APIParms.END_TIME, APIParms.TIME_UNIT, APIParms.METERS],
+    parms=[APIParms.API_KEY, APIParms.START_TIME,
+           APIParms.END_TIME, APIParms.TIME_UNIT, APIParms.METERS],
     response=EnergyDetailResponse,
 )
 
 
 @dataclass
 class PowerDetailsResponse(baseclass):
-    """This dataclass describes the response from the Power Details API endpoint"""
+    """This dataclass describes the response from the Power Details API endpoint
+    Attributes:
+        powerDetails: The detailed power data returned by the API.
+    """
 
     powerDetails: DetailData
 
@@ -557,13 +678,22 @@ PowerDetails = Endpoint(
     endpoint="site/{siteid}/powerDetails",
     name="Site Power - Details",
     arguments=[APIArgs.SITEID],
-    parms=[APIParms.API_KEY, APIParms.START_TIME, APIParms.END_TIME, APIParms.METERS],
+    parms=[APIParms.API_KEY, APIParms.START_TIME,
+           APIParms.END_TIME, APIParms.METERS],
     response=PowerDetailsResponse,
 )
 
 
 @dataclass
 class PowerData(baseclass):
+    """This dataclass describes the power data returned by the PowerData API endpoint.
+
+    Attributes:
+        timeUnit: The granularity of the data returned.
+        unit: The unit of the data returned.
+        measuredBy: The source of the measurement.
+        values: A Listof timestamped power values.
+    """
     timeUnit: TimeUnit
     unit: str
     measuredBy: str
@@ -600,6 +730,14 @@ class Connection:
 
 @dataclass
 class PowerDetailInfo(baseclass):
+    """This dataclass describes the detailed power information for a site component.
+
+    Attributes:
+        status: The operational status of the component.
+        currentPower: The current power value for the component.
+        chargeLevel: The charge level, if applicable.
+        critical: Whether the component is in a critical state.
+    """
     status: str
     currentPower: float
     chargeLevel: int
@@ -608,12 +746,23 @@ class PowerDetailInfo(baseclass):
 
 @dataclass
 class SiteCurrentPowerFlow(baseclass):
+    """This dataclass describes the current power flow for a site.
+
+    Attributes:
+        unit: The unit of measurement for power values.
+        GRID: Detailed power information for the grid connection.
+        LOAD: Detailed power information for the site load.
+        PV: Detailed power information for the photovoltaic system.
+        STORAGE: Detailed power information for the storage system.
+        connections: List of power connections between site components.
+    """
     unit: str
     GRID: PowerDetailInfo
     LOAD: PowerDetailInfo
     PV: PowerDetailInfo
     STORAGE: PowerDetailInfo
-    connections: list[Connection] = field(default_factory=list)
+    connections: List[Connection] = field(default_factory=list)
+
 
 @dataclass
 class PowerFlowResponse(baseclass):
@@ -633,6 +782,18 @@ PowerFlow = Endpoint(
 
 @dataclass
 class BatteryTelemetry(baseclass):
+    """This dataclass describes the telemetry information for a battery.
+
+    Attributes:
+        timeStamp: The timestamp of the telemetry reading.
+        power: The current power value of the battery.
+        batteryState: The operational state of the battery.
+        lifeTimeEnergyCharged: Total energy charged over the battery's lifetime.
+        lifeTimeEnergyDischarged: Total energy discharged over the battery's lifetime.
+        fullPackEnergyAvailable: The available energy in the battery pack.
+        internalTemp: The internal temperature of the battery.
+        ACGridCharging: The amount of AC grid charging.
+    """
     timeStamp: str
     power: int
     batteryState: int
@@ -645,21 +806,41 @@ class BatteryTelemetry(baseclass):
 
 @dataclass
 class Battery(baseclass):
+    """This dataclass describes the battery information and telemetry data returned by the Storage API endpoint.
+
+    Attributes:
+        nameplate: The nameplate capacity of the battery.
+        serialNumber: The serial number of the battery.
+        modelNumber: The model number of the battery.
+        telemetryCount: The number of telemetry records.
+        telemetries: A list of telemetry data for the battery.
+    """
     nameplate: int
     serialNumber: str
     modelNumber: str
     telemetryCount: int
-    telemetries: list[BatteryTelemetry] = field(default_factory=list)
+    telemetries: List[BatteryTelemetry] = field(default_factory=list)
 
 
 @dataclass
 class StorageData(baseclass):
+    """This dataclass describes the storage data returned by the Storage API endpoint.
+
+    Attributes:
+        batteryCount: The number of batteries included in the response.
+        batteries: A list of battery information and telemetry data.
+    """
     batteryCount: int
-    batteries: list[Battery] = field(default_factory=list)
+    batteries: List[Battery] = field(default_factory=list)
 
 
 @dataclass
 class StorageDataResponse(baseclass):
+    """This dataclass describes the response from the Storage API endpoint.
+
+    Attributes:
+        storageData: The storage data containing battery information and telemetry.
+    """
     storageData: StorageData
 
 
@@ -667,7 +848,8 @@ Storage = Endpoint(
     endpoint="site/{siteid}/storageData",
     name="Battery Telemetry",
     arguments=[APIArgs.SITEID],
-    parms=[APIParms.API_KEY, APIParms.START_TIME, APIParms.END_TIME, APIParms.SERIALS],
+    parms=[APIParms.API_KEY, APIParms.START_TIME,
+           APIParms.END_TIME, APIParms.SERIALS],
     response=StorageDataResponse,
 )
 
@@ -684,7 +866,14 @@ class Meter(baseclass):
 
 @dataclass
 class Sensor(baseclass):
-    """This dataclass describes the sensor information provided by the Inventory API Endpoint"""
+    """This dataclass describes the sensor information provided by the Inventory API Endpoint
+    
+    Attributes:
+        connectedSolaredgeDeviceSN: The serial number of the connected SolarEdge device.
+        connectedTo: The type of device the sensor is connected to.
+        id: The unique identifier of the sensor.
+        category: The category of the sensor.
+        type: The type of sensor."""
 
     connectedSolaredgeDeviceSN: str
     connectedTo: str
@@ -695,7 +884,12 @@ class Sensor(baseclass):
 
 @dataclass
 class Gateway(baseclass):
-    """This dataclass describes the gatewayinformation provided by the Inventory API Endpoint"""
+    """This dataclass describes the gatewayinformation provided by the Inventory API Endpoint
+    
+    Attributes:
+        name: The name of the gateway.
+        serialNumber: The serial number of the gateway.
+        firmwareVersion: The firmware version of the gateway."""
 
     name: str
     serialNumber: str
@@ -704,7 +898,17 @@ class Gateway(baseclass):
 
 @dataclass
 class BatteryInventory(baseclass):
-    """This dataclass describes the battery information provided by the Inventory API Endpoint"""
+    """This dataclass describes the battery inventory information provided by the Inventory API Endpoint.
+
+    Attributes:
+        name: The name of the battery.
+        manufacturer: The manufacturer of the battery.
+        model: The model of the battery.
+        firmwareVersion: The firmware version of the battery.
+        connectedInverterSn: The serial number of the connected inverter.
+        nameplateCapacity: The nameplate capacity of the battery.
+        SN: The serial number of the battery.
+    """
 
     name: str
     manufacturer: str
@@ -729,11 +933,12 @@ class Inverter(baseclass):
     manufacturer: str
     model: str
     communicationMethod: str
-    dsp1Version : str
-    dsp2Version : str
+    dsp1Version: str
+    dsp2Version: str
     cpuVersion: str
     connectedOptimizers: int
     partNumber: str
+    site: Optional[int] = None
 
 
 @dataclass
@@ -749,17 +954,21 @@ class InventoryData(baseclass):
         site : The site ID is added as an additional attribute but not returned by the API
     """
 
-    meters: list[Meter] = field(default_factory=list)
-    sensors: list[Sensor] = field(default_factory=list)
-    gateways: list[Gateway] = field(default_factory=list)
-    batteries: list[BatteryInventory] = field(default_factory=list)
-    inverters: list[Inverter] = field(default_factory=list)
-    site: Optional[str] = None
+    meters: List[Meter] = field(default_factory=list)
+    sensors: List[Sensor] = field(default_factory=list)
+    gateways: List[Gateway] = field(default_factory=list)
+    batteries: List[BatteryInventory] = field(default_factory=list)
+    inverters: List[Inverter] = field(default_factory=list)
+    site: Optional[int] = None
 
 
 @dataclass
 class InventoryResponse(baseclass):
-    """This dataclass describes the response from the Inventory API endpoint"""
+    """This dataclass describes the response from the Inventory API endpoint.
+
+    Attributes:
+        Inventory: The inventory data containing meters, sensors, batteries, inverters, gateways, and site information.
+    """
 
     Inventory: InventoryData
 
@@ -775,27 +984,44 @@ Inventory = Endpoint(
 
 @dataclass
 class ComponentEntry(baseclass):
-    """This dataclass describes the component data provided by the Components API Endpoint"""
+    """This dataclass describes a single component entry provided by the Components API Endpoint.
+
+    Attributes:
+        name: The name of the component.
+        manufacturer: The manufacturer of the component.
+        model: The model of the component.
+        serialNumber: The serial number of the component.
+        kWpDC: The DC power rating of the component in kilowatts.
+        site: The site ID associated with the component, if available.
+    """
 
     name: str
     manufacturer: str
     model: str
     serialNumber: str
     kWpDC: str
-    site: Optional[str] = None
+    site: Optional[int] = None
 
 
 @dataclass
 class ComponentList(baseclass):
-    """This dataclass describes the information provided by the Components API Endpoint"""
+    """This dataclass describes the information provided by the Components API Endpoint
+    
+    Attributes:
+        count: The total number of components returned by the API.
+        list: A list of ComponentEntry objects representing the individual components."""
 
     count: int
-    list: list[ComponentEntry] 
+    list: List[ComponentEntry] = field(default_factory=list)
 
 
 @dataclass
 class ComponentsResponse(baseclass):
-    """This dataclass describes the response from the Components API endpoint"""
+    """This dataclass describes the response from the Components API endpoint
+    
+    Attributes:
+        reporters: The list of components returned by the API, encapsulated in a ComponentList object.
+    """
 
     reporters: ComponentList
 
@@ -812,20 +1038,46 @@ Components = Endpoint(
 
 @dataclass
 class LData(baseclass):
-    """This dataclass describes the phase information as part of the inverter telemetry."""
+    """This dataclass describes the phase information as part of the inverter telemetry.
+    
+    Attributes:
+        acCurrent: The AC current for the phase.
+        acVoltage: The AC voltage for the phase.
+        acFrequency: The AC frequency for the phase.
+        activePower: The active power for the phase.
+        reactivePower: The reactive power for the phase.
+        apparentPower: The apparent power for the phase, if available.
+        cosPhi: The power factor (cosine of the phase angle) for the phase, if available."""
 
     acCurrent: float
     acVoltage: float
     acFrequency: float
-    apparentPower: float
     activePower: float
     reactivePower: float
-    cosPhi: float
+    apparentPower: Optional[float] = 0.0    
+    cosPhi: Optional[float] = 0.0
 
 
 @dataclass
 class Telemetry(baseclass):
-    """This dataclass describes the telemetry information provided for the inverter."""
+    """This dataclass describes the telemetry information provided for the inverter.
+    
+    Attributes:
+        date: The timestamp of the telemetry reading.
+        totalActivePower: The total active power output of the inverter.
+        powerLimit: The power limit set for the inverter.
+        totalEnergy: The total energy produced by the inverter.
+        temperature: The temperature of the inverter.
+        inverterMode: The operational mode of the inverter.
+        operationMode: The operation mode of the inverter.
+        L1Data: The telemetry data for phase L1.
+        L2Data: The telemetry data for phase L2, if available.
+        L3Data: The telemetry data for phase L3, if available.
+        groundFaultResistance: The ground fault resistance, if available.
+        vL1To2: The voltage between phases L1 and L2, if available.
+        vL2To3: The voltage between phases L2 and L3, if available.
+        vL3To1: The voltage between phases L3 and L1, if available.
+        dcVoltage: The DC voltage of the inverter, if available."""
 
     date: datetime
     totalActivePower: float
@@ -833,28 +1085,35 @@ class Telemetry(baseclass):
     totalEnergy: float
     temperature: float
     inverterMode: InverterMode
-    operationMode: int
+    operationMode: OperationMode
+    L1Data: LData = field(default_factory=lambda: LData(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
+    L2Data: Optional[LData] = None
+    L3Data: Optional[LData] = None
     groundFaultResistance: Optional[float] = 0.0
     vL1To2: Optional[float] = 0.0
     vL2To3: Optional[float] = 0.0
     vL3To1: Optional[float] = 0.0
-    dcVoltage: Optional[float] = 0.0
-    L1Data: Optional[LData] = None
-    L2Data: Optional[LData] = None
-    L3Data: Optional[LData] = None
+    dcVoltage: Optional[float] = 0.0  
 
 
 @dataclass
 class InverterInfo(baseclass):
-    """This dataclass describes the information provided by the InverterTelemetry API Endpoint"""
+    """This dataclass describes the information provided by the InverterTelemetry API Endpoint
+    
+    Attributes:
+        count: The total number of telemetry records returned by the API.
+        telemetries: A list of Telemetry objects representing the individual telemetry records."""
 
     count: int
-    telemetries: list[Telemetry] = field(default_factory=list)
+    telemetries: List[Telemetry] = field(default_factory=list)
 
 
 @dataclass
 class InverterResponse(baseclass):
-    """This dataclass describes the response from the InverterTelemetry API endpoint"""
+    """This dataclass describes the response from the InverterTelemetry API endpoint
+    
+    Attributes:
+        data: The inverter telemetry data."""
 
     data: InverterInfo
 
@@ -871,14 +1130,19 @@ InverterTelemetry = Endpoint(
 @dataclass
 class Version(baseclass):
     """This dataclass describes the version information provided by Version and Supported Versions API endpoint
-    Attributes : release"""
+    
+    Attributes : release
+    """
 
     release: str
 
 
 @dataclass
 class VersionResponse(baseclass):
-    """This dataclass describes the response from the Version API endpoint"""
+    """This dataclass describes the response from the Version API endpoint
+    
+    Attributes:
+        version: The version information returned by the API, encapsulated in a Version object."""
 
     version: Version
 
@@ -890,10 +1154,12 @@ CurrentVersion = Endpoint(
 
 @dataclass
 class VersionsResponse(baseclass):
-    """This dataclass describes the response from the SupportedVersions API endpoint"""
+    """This dataclass describes the response from the SupportedVersions API endpoint
+    
+    Attributes:
+        supported: A list of Version objects representing the supported versions returned by the API."""
 
-    supported: list[Version] = field(default_factory=list)
-
+    supported: List[Version] = field(default_factory=list)
 
 
 SupportedVersions = Endpoint(
@@ -943,6 +1209,7 @@ class APIList(Enum):
     CurrentVersion = CurrentVersion
     SupportedVersions = SupportedVersions
 
+
 @dataclass
 class responses(APIResponses):
     """Maps API endpoints to their response classes.
@@ -970,14 +1237,34 @@ class responses(APIResponses):
     SupportedVersions: VersionsResponse
 
 
-
 @dataclass
 class SummaryData:
     """This dataclass is used to store data returned by multiple calls to the REST API."""
 
-    sites: list[Site] = field(default_factory=list)
-    inventories: list[InventoryData] = field(default_factory=list)
-    components: list[ComponentEntry] = field(default_factory=list)
+    sites: List[Site] = field(default_factory=list)
+    inventories: List[InventoryData] = field(default_factory=list)
+    components: List[ComponentEntry] = field(default_factory=list)
+
+@dataclass
+class RESTClient:
+    """This dataclass defines the set of information necessary to use a REST API.
+
+    Attributes:
+        url: The URL used for the REST API
+        auth: The type of authorisation used
+        apis: A list of the API Endpoints
+        apiargs: A dataclass describing the set of arguments used by the endpoints
+        apiparms: A dataclass describing the set of parameters used by the endpoints
+        constants: A list of constants
+    """
+
+    url: str
+    apilist: Type[Enum]
+    arguments: apiargs 
+    parameters: apiparms
+    constants: Type[Enum]
+    responses: Type[responses]
+    auth: Optional[Type[Enum]] = None    
 
 
 # This instance of RESTClient describes the SolarEdge API
@@ -986,7 +1273,7 @@ Solaredge = RESTClient(
     auth=None,
     apilist=APIList,
     arguments=apiargs(),
-    parameters = apiparms(),
-    constants = ConstantList,
+    parameters=apiparms(),
+    constants=ConstantList,
     responses=responses
 )

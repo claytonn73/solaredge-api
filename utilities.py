@@ -11,10 +11,10 @@ from dotenv import dotenv_values
 __all__ = ["InfluxConnection", "get_logger", "get_env"]
 
 
-def get_logger(destination: str = "stdout"):
+def get_logger(destination: str = "stdout", level: str = "INFO") -> logging.Logger:
     """Creates a logger instance of the desired type"""
     logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
+    logger.setLevel(level)
     handlers = {
         "stdout": logging.StreamHandler(),
         "syslog": logging.handlers.SysLogHandler(facility=logging.handlers.SysLogHandler.LOG_DAEMON, 
@@ -24,8 +24,12 @@ def get_logger(destination: str = "stdout"):
     if destination == "syslog":
         log_format = 'python[%(process)d]: [%(levelname)s] %(filename)s:%(funcName)s:%(lineno)d \"%(message)s\"'
         handler.setFormatter(logging.Formatter(fmt=log_format))
+    elif destination == "stdout":
+        log_format = '%(asctime)s %(levelname)s %(filename)s:%(funcName)s:%(lineno)d  %(message)s'
+        handler.setFormatter(logging.Formatter(fmt=log_format))        
     logger.addHandler(handler)
     return logger
+
 
 
 def get_env() -> dict:
