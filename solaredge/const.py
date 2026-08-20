@@ -48,7 +48,7 @@ class Unit(StrEnum):
     WATT = "W"
     WATT_HOUR = "Wh"
 
-    
+
 class Currency(StrEnum):
     """Enumeration of supported currency types for site financial data.
     """
@@ -165,7 +165,7 @@ class APIArgs(StrEnum):
 @dataclass
 class apiargs(APIArguments):
     """Dataclass describing the set of arguments used by the API endpoints.
-    
+
     Attributes:
         siteid: The ID of the site for which to retrieve data.
         serialnumber: The serial number of the inverter for which to retrieve data.
@@ -216,7 +216,7 @@ class apiparms(APIParameters):
     imported.  By using ``default_factory`` we recompute each time an instance
     is created.
     """
-    size : int = 100
+    size: int = 100
     startIndex: int = 0
     searchText: Optional[str] = None
     sortProperty: Optional[Property] = None
@@ -224,13 +224,15 @@ class apiparms(APIParameters):
     Status: SiteStatus = SiteStatus.ALL
     api_key: Optional[str] = None
     startDate: str = field(
-        default_factory=lambda: (datetime.now() - timedelta(days=1)).strftime(DateFormats.DATE.value)
+        default_factory=lambda: (
+            datetime.now() - timedelta(days=1)).strftime(DateFormats.DATE.value)
     )
     endDate: str = field(
         default_factory=lambda: datetime.now().strftime(DateFormats.DATE.value)
     )
     startTime: str = field(
-        default_factory=lambda: (datetime.now() - timedelta(days=1)).strftime(DateFormats.DATETIME.value)
+        default_factory=lambda: (
+            datetime.now() - timedelta(days=1)).strftime(DateFormats.DATETIME.value)
     )
     endTime: str = field(
         default_factory=lambda: datetime.now().strftime(DateFormats.DATETIME.value)
@@ -244,7 +246,7 @@ class apiparms(APIParameters):
 @dataclass
 class Location(baseclass):
     """This dataclass describes the location information provided in multiple API endpoints
-    
+
     Attributes:
         country: The country where the site is located.
         city: The city where the site is located.
@@ -295,7 +297,7 @@ class Uris(baseclass):
     DATA_PERIOD: str
     DETAILS: str
     OVERVIEW: str
-    SITE_IMAGE: Optional[str] = None    
+    SITE_IMAGE: Optional[str] = None
 
 
 @dataclass
@@ -343,12 +345,12 @@ class Site(baseclass):
     alertSeverity: Optional[str] = None
 
 
-
 @dataclass
 class SiteList(baseclass):
     """This dataclass describes the list of sites provided by the Sites API endpoint
     Attributes: count - count of sites
-                site - a list of site information"""
+                site - a list of site information
+    """
 
     count: int
     site: List[Site] = field(default_factory=list)
@@ -357,8 +359,10 @@ class SiteList(baseclass):
 @dataclass
 class SitesResponse(baseclass):
     """This dataclass describes the response from the Sites API endpoint
-    
-    Attributes: sites - information about the sites returned by the API"""
+
+    Attributes: count - count of sites returned by the API
+                sites - information about the sites returned by the API
+    """
 
     sites: SiteList
 
@@ -399,7 +403,7 @@ SiteInfo = Endpoint(
 @dataclass
 class GasEmissionSaved(baseclass):
     """This dataclass describes the gas emissions savings returned by the SiteBenefits API
-    
+
     Attributes:
         units: The unit of measurement for the gas emissions.
         co2: The amount of CO2 emissions saved.
@@ -416,7 +420,7 @@ class GasEmissionSaved(baseclass):
 @dataclass
 class EnvBenefits(baseclass):
     """This dataclass describes the environmental benefits returned by the SiteBenefits API
-    
+
     Attributes:
         gasEmissionSaved: The gas emissions savings information.
         treesPlanted: The equivalent number of trees planted.
@@ -431,7 +435,7 @@ class EnvBenefits(baseclass):
 @dataclass
 class EnvBenefitsResponse(baseclass):
     """This dataclass describes the initial response for the SiteBenefits API
-    
+
     Attributes:
         envBenefits: The environmental benefits information.
     """
@@ -620,7 +624,7 @@ SiteEnergyTimeframe = Endpoint(
 @dataclass
 class DataType(baseclass):
     """This dataclass describes a list of information retuened by various API endpoints
-    
+
     Attrributes: type - the type of data in the list
                  values - a list of values of this type"""
 
@@ -646,7 +650,7 @@ class DetailData(baseclass):
 @dataclass
 class EnergyDetailResponse(baseclass):
     """This dataclass describes the response from the EnergyDetails API endpoint
-    
+
     Attributes:
         energyDetails: The detailed energy data returned by the API.
     """
@@ -867,7 +871,7 @@ class Meter(baseclass):
 @dataclass
 class Sensor(baseclass):
     """This dataclass describes the sensor information provided by the Inventory API Endpoint
-    
+
     Attributes:
         connectedSolaredgeDeviceSN: The serial number of the connected SolarEdge device.
         connectedTo: The type of device the sensor is connected to.
@@ -885,7 +889,7 @@ class Sensor(baseclass):
 @dataclass
 class Gateway(baseclass):
     """This dataclass describes the gatewayinformation provided by the Inventory API Endpoint
-    
+
     Attributes:
         name: The name of the gateway.
         serialNumber: The serial number of the gateway.
@@ -1006,7 +1010,7 @@ class ComponentEntry(baseclass):
 @dataclass
 class ComponentList(baseclass):
     """This dataclass describes the information provided by the Components API Endpoint
-    
+
     Attributes:
         count: The total number of components returned by the API.
         list: A list of ComponentEntry objects representing the individual components."""
@@ -1018,7 +1022,7 @@ class ComponentList(baseclass):
 @dataclass
 class ComponentsResponse(baseclass):
     """This dataclass describes the response from the Components API endpoint
-    
+
     Attributes:
         reporters: The list of components returned by the API, encapsulated in a ComponentList object.
     """
@@ -1039,7 +1043,7 @@ Components = Endpoint(
 @dataclass
 class LData(baseclass):
     """This dataclass describes the phase information as part of the inverter telemetry.
-    
+
     Attributes:
         acCurrent: The AC current for the phase.
         acVoltage: The AC voltage for the phase.
@@ -1054,14 +1058,14 @@ class LData(baseclass):
     acFrequency: float
     activePower: float
     reactivePower: float
-    apparentPower: Optional[float] = 0.0    
+    apparentPower: Optional[float] = 0.0
     cosPhi: Optional[float] = 0.0
 
 
 @dataclass
 class Telemetry(baseclass):
     """This dataclass describes the telemetry information provided for the inverter.
-    
+
     Attributes:
         date: The timestamp of the telemetry reading.
         totalActivePower: The total active power output of the inverter.
@@ -1086,20 +1090,21 @@ class Telemetry(baseclass):
     temperature: float
     inverterMode: InverterMode
     operationMode: OperationMode
-    L1Data: LData = field(default_factory=lambda: LData(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
+    L1Data: LData = field(default_factory=lambda: LData(
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
     L2Data: Optional[LData] = None
     L3Data: Optional[LData] = None
     groundFaultResistance: Optional[float] = 0.0
     vL1To2: Optional[float] = 0.0
     vL2To3: Optional[float] = 0.0
     vL3To1: Optional[float] = 0.0
-    dcVoltage: Optional[float] = 0.0  
+    dcVoltage: Optional[float] = 0.0
 
 
 @dataclass
 class InverterInfo(baseclass):
     """This dataclass describes the information provided by the InverterTelemetry API Endpoint
-    
+
     Attributes:
         count: The total number of telemetry records returned by the API.
         telemetries: A list of Telemetry objects representing the individual telemetry records."""
@@ -1111,7 +1116,7 @@ class InverterInfo(baseclass):
 @dataclass
 class InverterResponse(baseclass):
     """This dataclass describes the response from the InverterTelemetry API endpoint
-    
+
     Attributes:
         data: The inverter telemetry data."""
 
@@ -1130,7 +1135,7 @@ InverterTelemetry = Endpoint(
 @dataclass
 class Version(baseclass):
     """This dataclass describes the version information provided by Version and Supported Versions API endpoint
-    
+
     Attributes : release
     """
 
@@ -1140,7 +1145,7 @@ class Version(baseclass):
 @dataclass
 class VersionResponse(baseclass):
     """This dataclass describes the response from the Version API endpoint
-    
+
     Attributes:
         version: The version information returned by the API, encapsulated in a Version object."""
 
@@ -1155,7 +1160,7 @@ CurrentVersion = Endpoint(
 @dataclass
 class VersionsResponse(baseclass):
     """This dataclass describes the response from the SupportedVersions API endpoint
-    
+
     Attributes:
         supported: A list of Version objects representing the supported versions returned by the API."""
 
@@ -1245,6 +1250,7 @@ class SummaryData:
     inventories: List[InventoryData] = field(default_factory=list)
     components: List[ComponentEntry] = field(default_factory=list)
 
+
 @dataclass
 class RESTClient:
     """This dataclass defines the set of information necessary to use a REST API.
@@ -1260,11 +1266,11 @@ class RESTClient:
 
     url: str
     apilist: Type[Enum]
-    arguments: apiargs 
+    arguments: apiargs
     parameters: apiparms
     constants: Type[Enum]
     responses: Type[responses]
-    auth: Optional[Type[Enum]] = None    
+    auth: Optional[Type[Enum]] = None
 
 
 # This instance of RESTClient describes the SolarEdge API

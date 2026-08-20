@@ -213,7 +213,7 @@ class SolaredgeClient:
     def get_power(self, site_id: int) -> solaredge.const.PowerData:
         """Gets the power data from the Solaredge REST API
         Args:
-            site_id (str): The site ID to be used for the query
+            site_id (int): The site ID to be used for the query
         Returns:
             solaredge.const.PowerData
         """
@@ -223,7 +223,7 @@ class SolaredgeClient:
     def get_power_details(self, site_id: int | None = None) -> solaredge.const.DetailData:
         """Gets the power details from the Solaredge REST API
         Args:
-            site_id (str): The site ID to be used for the query
+            site_id (int): The site ID to be used for the query
         Returns:
             solaredge.const.PowerDetailData
         """
@@ -233,7 +233,7 @@ class SolaredgeClient:
     def get_power_flow(self, site_id: int) -> solaredge.const.SiteCurrentPowerFlow:
         """Get the current power flow data for a specific site.
         Args:
-            site_id (str): The site ID to be used for the query.
+            site_id (int): The site ID to be used for the query.
         Returns:
             The current power flow data for the specified site.
         """
@@ -394,4 +394,4 @@ class SolaredgeClient:
             raise
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug("Formatted API results:\n %s", ujson.dumps(results_json, indent=2))
-        return api.value.response.parse_kwargs(self,api.value.response, **results_json) # type: ignore
+        return api.value.response.parse_kwargs(self, api.value.response, **results_json) # type: ignore
