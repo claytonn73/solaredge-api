@@ -14,7 +14,7 @@ import ciso8601
 
 logger = logging.getLogger(__name__)
 
-@dataclass
+@dataclass(slots=True)
 class baseclass:
     """This dataclass provides the post_init code to handle the nested dataclasses
     and formatting of datetime entries"""
@@ -55,7 +55,7 @@ class baseclass:
         for entry in fields(self):
             if (entry_value := getattr(self, entry.name)) is None:
                 continue
-            entry_type = entry.type
+            entry_type : Any = entry.type
             if self.is_optional(entry_type):
                 entry_type = next(
                     field_type for field_type in get_args(entry_type)

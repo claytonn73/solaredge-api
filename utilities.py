@@ -20,7 +20,7 @@ def get_logger(destination: str = "stdout", level: str = "INFO") -> logging.Logg
         "syslog": logging.handlers.SysLogHandler(facility=logging.handlers.SysLogHandler.LOG_DAEMON, 
                                                  address='/dev/log')
     }
-    handler = handlers.get(destination)
+    handler : logging.Handler = handlers.get(destination)
     if destination == "syslog":
         log_format = 'python[%(process)d]: [%(levelname)s] %(filename)s:%(funcName)s:%(lineno)d \"%(message)s\"'
         handler.setFormatter(logging.Formatter(fmt=log_format))

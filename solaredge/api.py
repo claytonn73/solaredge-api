@@ -15,6 +15,7 @@ from solaredge.const import APIList, DateFormats, Solaredge
 # Only export the Solaredge Client
 __all__ = ["SolaredgeClient"]
 
+logger = logging.getLogger(__name__)
 
 class SolaredgeClient:
     """This class enables queries to be performed using the Solaredge REST API"""
@@ -26,8 +27,7 @@ class SolaredgeClient:
         """
         if apikey is None:
             raise ValueError("API key must not be None")
-        self.logger = logging.getLogger(__name__)
-        self.logger.info("Initialising Solaredge API Client")
+        logger.info("Initialising Solaredge API Client")
         self._api = Solaredge
         # Solaredge API uses the API key as a parameter
         self._api.parameters.api_key = apikey
@@ -55,13 +55,13 @@ class SolaredgeClient:
         # Store the site information
         self._storeddata.sites = self.get_sites()
         for site in self._storeddata.sites:
-            self.logger.info("Found a site with id: %s", site.id)
+            logger.info("Found a site with id: %s", site.id)
             # Store the inventory information for each site
             self._storeddata.inventories.append(
                 self.get_site_inventory(site.id))
         for data in self._storeddata.inventories:
             for inverter in data.inverters:
-                self.logger.info("Found an inverter with SN: %s", inverter.SN)
+                logger.info("Found an inverter with SN: %s", inverter.SN)
         # If there is one inverter then set the serial number
         if self.one_site:
             self._api.arguments.siteid = self._storeddata.sites[0].id
@@ -387,8 +387,8 @@ class SolaredgeClient:
     ):
         """Initialise the arguments required to call one of the REST APIs and then call it returning the results."""
         if sample:
-            self.logger.info("Processing sample json for: %s", api.name)
-        self.logger.info("Calling API endpoint: %s", api.name)
+            logger.info("Processing sample json for: %s", api.name)
+        logger.info("Calling API endpoint: %s", api.name)
         # Create a dictionary entry for the arguments required by the endpoint
         argumentlist = {entry.value: getattr(
             self._api.arguments, entry.value) for entry in api.value.arguments}
@@ -406,19 +406,19 @@ class SolaredgeClient:
         try:
             results = self._session.get(url=url, params=params, timeout=60)
             results.raise_for_status()
-        except requests.exceptions.RequestException as err:
-            self.logger.error("Requests error encountered: %s", err)
-            raise err
+        except requests.exceptions.RequestException:
+            logger.exception("Request failed for API endpoint=%s", api.name)
+            raise 
         try:
             results_json = results.json()
         except ValueError as err:
             # requests may raise a ValueError (or a JSONDecodeError subclass) when
             # the response body isn't valid JSON. Be defensive and catch ValueError
             # to avoid relying on implementation details of requests/simplejson.
-            self.logger.error("JSON decoder error encountered: %s", err)
+            logger.exception("JSON decoder error encountered: %s", err)
             raise
-        if self.logger.isEnabledFor(logging.DEBUG):
-            self.logger.debug("Formatted API results:\n %s",
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug("Formatted API results:\n %s",
                               ujson.dumps(results_json, indent=2))
         if api.value.returns is not None:
             data = api.value.response.parse_kwargs( # type: ignore

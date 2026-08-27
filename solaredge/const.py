@@ -242,7 +242,7 @@ class apiparms(APIParameters):
     systemUnits: Metrics = Metrics.METRIC
 
 
-@dataclass
+@dataclass(slots=True)
 class Location(baseclass):
     """This dataclass describes the location information provided in multiple API endpoints
 
@@ -270,7 +270,7 @@ class Location(baseclass):
     longitude: float | None = None
 
 
-@dataclass
+@dataclass(slots=True)
 class PrimaryModule(baseclass):
     """Describes the primary module (panel) installed at the site.
 
@@ -286,7 +286,7 @@ class PrimaryModule(baseclass):
     temperatureCoef: float
 
 
-@dataclass
+@dataclass(slots=True)
 class Uris(baseclass):
     """Container for URI templates returned in various API responses.
 
@@ -299,7 +299,7 @@ class Uris(baseclass):
     SITE_IMAGE: str | None = None
 
 
-@dataclass
+@dataclass(slots=True)
 class PublicSettings(baseclass):
     """Public visibility settings for a site.
 
@@ -311,7 +311,7 @@ class PublicSettings(baseclass):
     name: str | None = None
 
 
-@dataclass
+@dataclass(slots=True)
 class Site(baseclass):
     """This dataclass describes the site information provided by the Sites API endpoint
 
@@ -344,7 +344,7 @@ class Site(baseclass):
     alertSeverity: str | None = None
 
 
-@dataclass
+@dataclass(slots=True)
 class SiteList(baseclass):
     """This dataclass describes the list of sites provided by the Sites API endpoint
     
@@ -356,7 +356,7 @@ class SiteList(baseclass):
     site: list[Site] = field(default_factory=list)
 
 
-@dataclass
+@dataclass(slots=True)
 class SitesResponse(baseclass):
     """
     This dataclass describes the response from the Sites API endpoint
@@ -385,7 +385,7 @@ Sites = Endpoint(
 )
 
 
-@dataclass
+@dataclass(slots=True)
 class SiteInfoResponse(baseclass):
     """This dataclass describes the response from the SiteInfo API endpoint"""
 
@@ -402,7 +402,7 @@ SiteInfo = Endpoint(
 )
 
 
-@dataclass
+@dataclass(slots=True)
 class GasEmissionSaved(baseclass):
     """This dataclass describes the gas emissions savings returned by the SiteBenefits API
 
@@ -419,7 +419,7 @@ class GasEmissionSaved(baseclass):
     nox: float
 
 
-@dataclass
+@dataclass(slots=True)
 class EnvBenefits(baseclass):
     """This dataclass describes the environmental benefits returned by the SiteBenefits API
 
@@ -434,7 +434,7 @@ class EnvBenefits(baseclass):
     lightBulbs: float
 
 
-@dataclass
+@dataclass(slots=True)
 class EnvBenefitsResponse(baseclass):
     """This dataclass describes the initial response for the SiteBenefits API
 
@@ -455,7 +455,7 @@ SiteBenefits = Endpoint(
 )
 
 
-@dataclass
+@dataclass(slots=True)
 class Summary(baseclass):
     """This dataclass describes the historical summary data returned by the SiteOverview API"""
 
@@ -470,7 +470,7 @@ class CurrentPower(baseclass):
     power: float
 
 
-@dataclass
+@dataclass(slots=True)
 class OverviewData(baseclass):
     """This dataclass describes the energy overview data returned by the SiteOverview API"""
 
@@ -483,7 +483,7 @@ class OverviewData(baseclass):
     measuredBy: str
 
 
-@dataclass
+@dataclass(slots=True)
 class OverviewResponse(baseclass):
     """This dataclass describes the initial response for the SiteOverview API"""
 
@@ -500,7 +500,7 @@ SiteOverview = Endpoint(
 )
 
 
-@dataclass
+@dataclass(slots=True)
 class DataPeriod(baseclass):
     """This dataclass describes the data period returned by the SiteDataPeriod API
     Atttributes: startDate, endDate"""
@@ -509,7 +509,7 @@ class DataPeriod(baseclass):
     endDate: datetime
 
 
-@dataclass
+@dataclass(slots=True)
 class SiteDataPeriodResponse(baseclass):
     """This dataclass describes the initial response for the SiteDataPeriod API
     Atttributes: dataPeriod"""
@@ -527,24 +527,23 @@ SiteDataPeriod = Endpoint(
 )
 
 
-@dataclass
+@dataclass(slots=True)
 class Value(baseclass):
     """Represents a single timestamped value for energy or power data.
 
     This dataclass contains a datetime and its associated numeric value, used in various API responses.
     """
     date: datetime
-    value: float = 0.0
+    value: float | None = 0.0
 
     def __post_init__(self):
-        # Call parent's __post_init__ if it exists
-        if hasattr(super(), "__post_init__"):
-            super().__post_init__()
         if self.value is None:
             self.value = 0.0
+        super(Value, self).__post_init__()
 
 
-@dataclass
+
+@dataclass(slots=True)  
 class EnergyData(baseclass):
     """Represents energy data for a site over a specified time period.
 
@@ -556,7 +555,7 @@ class EnergyData(baseclass):
     measuredBy: str | None= None
 
 
-@dataclass
+@dataclass(slots=True)
 class EnergyDataResponse(baseclass):
     """Represents the response from the Site Energy API endpoint.
 
@@ -577,7 +576,7 @@ SiteEnergy = Endpoint(
 )
 
 
-@dataclass
+@dataclass(slots=True)
 class EnergyValue(baseclass):
     """Represents a single timestamped energy value for a site.
 
@@ -588,7 +587,7 @@ class EnergyValue(baseclass):
     unit: Unit
 
 
-@dataclass
+@dataclass(slots=True)
 class TimeFrameEnergyData(baseclass):
     """Represents energy data for a site over a specific time frame.
 
@@ -602,7 +601,7 @@ class TimeFrameEnergyData(baseclass):
     endLifetimeEnergy: EnergyValue
 
 
-@dataclass
+@dataclass(slots=True)
 class TimeFrameEnergyResponse(baseclass):
     """Represents the response from the Site Energy Timeframe API endpoint.
 
@@ -622,7 +621,7 @@ SiteEnergyTimeframe = Endpoint(
 )
 
 
-@dataclass
+@dataclass(slots=True)
 class DataType(baseclass):
     """This dataclass describes a list of information retuened by various API endpoints
 
@@ -633,7 +632,7 @@ class DataType(baseclass):
     values: list[Value] = field(default_factory=list)
 
 
-@dataclass
+@dataclass(slots=True)
 class DetailData(baseclass):
     """This dataclass defines the response to the PowerDetail API request
 
@@ -648,7 +647,7 @@ class DetailData(baseclass):
     meters: list[DataType] = field(default_factory=list)
 
 
-@dataclass
+@dataclass(slots=True)
 class EnergyDetailResponse(baseclass):
     """This dataclass describes the response from the EnergyDetails API endpoint
 
@@ -670,7 +669,7 @@ EnergyDetails = Endpoint(
 )
 
 
-@dataclass
+@dataclass(slots=True)
 class PowerDetailsResponse(baseclass):
     """This dataclass describes the response from the Power Details API endpoint
     Attributes:
@@ -691,7 +690,7 @@ PowerDetails = Endpoint(
 )
 
 
-@dataclass
+@dataclass(slots=True)
 class PowerData(baseclass):
     """This dataclass describes the power data returned by the PowerData API endpoint.
 
@@ -707,7 +706,7 @@ class PowerData(baseclass):
     values: list[Value] = field(default_factory=list)
 
 
-@dataclass
+@dataclass(slots=True)
 class PowerDataResponse(baseclass):
     """This dataclass is the intial response from the PowerData API endpoint"""
 
@@ -724,7 +723,7 @@ Power = Endpoint(
 )
 
 
-@dataclass
+@dataclass(slots=True)
 class Connection:
     """Represents a power connection between two points in the powerflow.
 
@@ -735,7 +734,7 @@ class Connection:
     to_: str | None= None
 
 
-@dataclass
+@dataclass(slots=True)
 class PowerDetailInfo(baseclass):
     """This dataclass describes the detailed power information for a site component.
 
@@ -752,7 +751,7 @@ class PowerDetailInfo(baseclass):
     timeLeft: int | None = None
 
 
-@dataclass
+@dataclass(slots=True)
 class SiteCurrentPowerFlow(baseclass):
     """This dataclass describes the current power flow for a site.
 
@@ -773,7 +772,7 @@ class SiteCurrentPowerFlow(baseclass):
     connections: list[Connection] = field(default_factory=list)
 
 
-@dataclass
+@dataclass(slots=True)
 class PowerFlowResponse(baseclass):
     """This dataclass is the intial response from the PowerFlow API endpoint"""
 
@@ -790,7 +789,7 @@ PowerFlow = Endpoint(
 )
 
 
-@dataclass
+@dataclass(slots=True)
 class BatteryTelemetry(baseclass):
     """This dataclass describes the telemetry information for a battery.
 
@@ -814,7 +813,7 @@ class BatteryTelemetry(baseclass):
     ACGridCharging: int
 
 
-@dataclass
+@dataclass(slots=True)
 class Battery(baseclass):
     """This dataclass describes the battery information and telemetry data returned by the Storage API endpoint.
 
@@ -832,7 +831,7 @@ class Battery(baseclass):
     telemetries: list[BatteryTelemetry] = field(default_factory=list)
 
 
-@dataclass
+@dataclass(slots=True)
 class StorageData(baseclass):
     """This dataclass describes the storage data returned by the Storage API endpoint.
 
@@ -844,7 +843,7 @@ class StorageData(baseclass):
     batteries: list[Battery] = field(default_factory=list)
 
 
-@dataclass
+@dataclass(slots=True)
 class StorageDataResponse(baseclass):
     """This dataclass describes the response from the Storage API endpoint.
 
@@ -865,7 +864,7 @@ Storage = Endpoint(
 )
 
 
-@dataclass
+@dataclass(slots=True)
 class Meter(baseclass):
     """This dataclass describes the meter information provided by the Inventory API Endpoint"""
 
@@ -875,7 +874,7 @@ class Meter(baseclass):
     SN: str | None= None
 
 
-@dataclass
+@dataclass(slots=True)
 class Sensor(baseclass):
     """This dataclass describes the sensor information provided by the Inventory API Endpoint
 
@@ -893,7 +892,7 @@ class Sensor(baseclass):
     type: str
 
 
-@dataclass
+@dataclass(slots=True)
 class Gateway(baseclass):
     """This dataclass describes the gatewayinformation provided by the Inventory API Endpoint
 
@@ -907,7 +906,7 @@ class Gateway(baseclass):
     firmwareVersion: str
 
 
-@dataclass
+@dataclass(slots=True)
 class BatteryInventory(baseclass):
     """This dataclass describes the battery inventory information provided by the Inventory API Endpoint.
 
@@ -930,7 +929,7 @@ class BatteryInventory(baseclass):
     SN: str
 
 
-@dataclass
+@dataclass(slots=True)
 class Inverter(baseclass):
     """This dataclass describes the inverter information provided by the Inventory API Endpoint
 
@@ -973,7 +972,7 @@ class InventoryData(baseclass):
     site: int | None = None
 
 
-@dataclass
+@dataclass(slots=True)
 class InventoryResponse(baseclass):
     """This dataclass describes the response from the Inventory API endpoint.
 
@@ -994,7 +993,7 @@ Inventory = Endpoint(
 )
 
 
-@dataclass
+@dataclass(slots=True)
 class ComponentEntry(baseclass):
     """This dataclass describes a single component entry provided by the Components API Endpoint.
 
@@ -1015,7 +1014,7 @@ class ComponentEntry(baseclass):
     site: int | None = None
 
 
-@dataclass
+@dataclass(slots=True)
 class ComponentList(baseclass):
     """This dataclass describes the information provided by the Components API Endpoint
 
@@ -1027,7 +1026,7 @@ class ComponentList(baseclass):
     list_: list[ComponentEntry] = field(default_factory=list)
 
 
-@dataclass
+@dataclass(slots=True)
 class ComponentsResponse(baseclass):
     """This dataclass describes the response from the Components API endpoint
 
@@ -1048,7 +1047,7 @@ Components = Endpoint(
 )
 
 
-@dataclass
+@dataclass(slots=True)
 class LData(baseclass):
     """This dataclass describes the phase information as part of the inverter telemetry.
 
@@ -1070,7 +1069,7 @@ class LData(baseclass):
     cosPhi: float | None = 0.0
 
 
-@dataclass
+@dataclass(slots=True)
 class Telemetry(baseclass):
     """This dataclass describes the telemetry information provided for the inverter.
 
@@ -1109,7 +1108,7 @@ class Telemetry(baseclass):
     dcVoltage: float | None = 0.0
 
 
-@dataclass
+@dataclass(slots=True)
 class InverterInfo(baseclass):
     """This dataclass describes the information provided by the InverterTelemetry API Endpoint
 
@@ -1121,7 +1120,7 @@ class InverterInfo(baseclass):
     telemetries: list[Telemetry] = field(default_factory=list)
 
 
-@dataclass
+@dataclass(slots=True)
 class InverterResponse(baseclass):
     """This dataclass describes the response from the InverterTelemetry API endpoint
 
@@ -1181,7 +1180,7 @@ class APIList(Enum):
     InverterData = InverterTelemetry
 
 
-@dataclass
+@dataclass(slots=True)
 class responses(APIResponses):
     """Maps API endpoints to their response classes.
 
@@ -1206,7 +1205,7 @@ class responses(APIResponses):
     InverterTelemetry: InverterResponse
 
 
-@dataclass
+@dataclass(slots=True)
 class SummaryData:
     """This dataclass is used to store data returned by multiple calls to the REST API."""
 
