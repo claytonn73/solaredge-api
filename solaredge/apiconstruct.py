@@ -47,10 +47,10 @@ class baseclass:
         except TypeError:
             return entry_value
 
-    def is_optional(self, field):
-        return type(None) in get_args(field)
+    def is_optional(self, entry):
+        return type(None) in get_args(entry)
 
-    def __post_init__(self) -> None:  # pylint: disable=R1260
+    def __post_init__(self) -> None:  # pylint: disable=too-complex
 
         for entry in fields(self):
             if (entry_value := getattr(self, entry.name)) is None:
@@ -59,7 +59,7 @@ class baseclass:
             if self.is_optional(entry_type):
                 entry_type = next(
                     field_type for field_type in get_args(entry_type)
-                    if field_type is not type(None)
+                    if not isinstance(None, field_type)
                 )
             # Order of checks is based on frequency of data within API responses
             # If the entry type is datetime then convert it from a string to a datetime object

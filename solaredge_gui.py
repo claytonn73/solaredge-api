@@ -90,7 +90,7 @@ class SolarEdgeGUI(tk.Tk):
                 result = method()
             self.result_text.delete(1.0, tk.END)
             self.result_text.insert(tk.END, pprint.pformat(result, width=120))
-        except Exception as e: # pylint: disable=W0718
+        except Exception as e: # pylint: disable=broad-exception-caught
             messagebox.showerror("API Error", str(e))
 
 
