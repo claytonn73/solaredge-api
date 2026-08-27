@@ -20,7 +20,14 @@ class baseclass:
     and formatting of datetime entries"""
 
     def parse_kwargs(self, cls, **kwargs: dict):
-        """ Parse only keywords that are defined in the dataclass definition"""
+        # If the key is in our reserved map, rename it; otherwise keep it as-is                
+        reserved_map = {'class': 'class_', 'for': 'for_', 'from': 'from_', 'to': 'to_'}
+
+        for key in list(kwargs.keys()):           
+            if key in reserved_map:
+                new_key = reserved_map.get(key, key)
+                kwargs[new_key] = kwargs.pop(key)
+        #Parse only keywords that are defined in the dataclass definition
         for k in kwargs:
             if k not in cls.__match_args__:
                 logger.error("%s got an unexpected keyword argument %s", cls.__name__, k)
@@ -111,6 +118,7 @@ class Endpoint:
     """Dataclass describing API endpoints and the data they return."""
 
     response: object
+    returns: Optional[str] = None
     sample: Optional[str] = None
     name: Optional[str] = None
     endpoint: str = ""

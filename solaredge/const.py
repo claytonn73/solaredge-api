@@ -24,8 +24,6 @@ from datetime import date, datetime, timedelta
 from enum import Enum, IntEnum, StrEnum
 from typing import List, Optional, Type
 
-from dataclasses_json import config, dataclass_json
-
 from solaredge.apiconstruct import (APIArguments, APIParameters, APIResponses,
                                     Endpoint, baseclass)
 
@@ -46,7 +44,9 @@ class Unit(StrEnum):
     """Enumeration of unit types for energy and power measurements.
     """
     WATT = "W"
+    KILOWATT = "kW"
     WATT_HOUR = "Wh"
+    KILOWATT_HOUR = "kWh"
 
 
 class Currency(StrEnum):
@@ -348,6 +348,7 @@ class Site(baseclass):
 @dataclass
 class SiteList(baseclass):
     """This dataclass describes the list of sites provided by the Sites API endpoint
+    
     Attributes: count - count of sites
                 site - a list of site information
     """
@@ -358,10 +359,10 @@ class SiteList(baseclass):
 
 @dataclass
 class SitesResponse(baseclass):
-    """This dataclass describes the response from the Sites API endpoint
+    """
+    This dataclass describes the response from the Sites API endpoint
 
-    Attributes: count - count of sites returned by the API
-                sites - information about the sites returned by the API
+    Attributes: sites - information about the sites returned by the API
     """
 
     sites: SiteList
@@ -381,6 +382,7 @@ Sites = Endpoint(
     ],
     sample="site_list.json",
     response=SitesResponse,
+    returns="sites",
 )
 
 
@@ -397,6 +399,7 @@ SiteInfo = Endpoint(
     arguments=[APIArgs.SITEID],
     parms=[APIParms.API_KEY],
     response=SiteInfoResponse,
+    returns="details",
 )
 
 
@@ -449,14 +452,7 @@ SiteBenefits = Endpoint(
     arguments=[APIArgs.SITEID],
     parms=[APIParms.API_KEY],
     response=EnvBenefitsResponse,
-)
-
-SiteImage = Endpoint(
-    endpoint="site/{siteid}/siteimage/{name}",
-    name="Site Image",
-    arguments=[APIArgs.SITEID],
-    parms=[APIParms.API_KEY],
-    response=str,
+    returns="envBenefits"
 )
 
 
@@ -501,6 +497,7 @@ SiteOverview = Endpoint(
     arguments=[APIArgs.SITEID],
     parms=[APIParms.API_KEY],
     response=OverviewResponse,
+    returns="overview"
 )
 
 
@@ -527,6 +524,7 @@ SiteDataPeriod = Endpoint(
     arguments=[APIArgs.SITEID],
     parms=[APIParms.API_KEY],
     response=SiteDataPeriodResponse,
+    returns="dataPeriod"
 )
 
 
@@ -554,7 +552,7 @@ class EnergyData(baseclass):
     This dataclass contains the time unit, unit type, a list of timestamped values, and the measurement source.
     """
     timeUnit: TimeUnit
-    unit: str
+    unit: Unit
     values: List[Value] = field(default_factory=list)
     measuredBy: Optional[str] = None
 
@@ -576,6 +574,7 @@ SiteEnergy = Endpoint(
            APIParms.END_DATE, APIParms.TIME_UNIT],
     sample="site_energy.json",
     response=EnergyDataResponse,
+    returns="energy"
 )
 
 
@@ -587,7 +586,7 @@ class EnergyValue(baseclass):
     """
     date: datetime
     energy: float
-    unit: str
+    unit: Unit
 
 
 @dataclass
@@ -597,7 +596,7 @@ class TimeFrameEnergyData(baseclass):
     This dataclass contains the total energy, unit, measurement source, and lifetime energy values at the start and end of the period.
     """
     energy: float
-    unit: str
+    unit: Unit
     measuredBy: str
     startLifetimeEnergy: EnergyValue
     endLifetimeEnergy: EnergyValue
@@ -618,6 +617,7 @@ SiteEnergyTimeframe = Endpoint(
     arguments=[APIArgs.SITEID],
     parms=[APIParms.API_KEY, APIParms.START_DATE, APIParms.END_DATE],
     response=TimeFrameEnergyResponse,
+    returns="timeFrameEnergy"
 )
 
 
@@ -643,7 +643,7 @@ class DetailData(baseclass):
     """
 
     timeUnit: TimeUnit
-    unit: str
+    unit: Unit
     meters: List[DataType] = field(default_factory=list)
 
 
@@ -665,6 +665,7 @@ EnergyDetails = Endpoint(
     parms=[APIParms.API_KEY, APIParms.START_TIME,
            APIParms.END_TIME, APIParms.TIME_UNIT, APIParms.METERS],
     response=EnergyDetailResponse,
+    returns="energyDetails"
 )
 
 
@@ -685,6 +686,7 @@ PowerDetails = Endpoint(
     parms=[APIParms.API_KEY, APIParms.START_TIME,
            APIParms.END_TIME, APIParms.METERS],
     response=PowerDetailsResponse,
+    returns="powerDetails"
 )
 
 
@@ -699,8 +701,8 @@ class PowerData(baseclass):
         values: A Listof timestamped power values.
     """
     timeUnit: TimeUnit
-    unit: str
-    measuredBy: str
+    unit: Unit
+    measuredBy: Optional[str] = None
     values: list[Value] = field(default_factory=list)
 
 
@@ -717,10 +719,10 @@ Power = Endpoint(
     arguments=[APIArgs.SITEID],
     parms=[APIParms.API_KEY, APIParms.START_TIME, APIParms.END_TIME],
     response=PowerDataResponse,
+    returns="power"
 )
 
 
-@dataclass_json
 @dataclass
 class Connection:
     """Represents a power connection between two points in the powerflow.
@@ -728,8 +730,8 @@ class Connection:
     The JSON fields are named `from` and `to`, but the dataclass uses
     `from_` and `to_` to avoid using the Python keyword `from`.
     """
-    from_: str = field(metadata=config(field_name="from"))
-    to_: str = field(metadata=config(field_name="to"))
+    from_: Optional[str] = None
+    to_: Optional[str] = None
 
 
 @dataclass
@@ -743,9 +745,10 @@ class PowerDetailInfo(baseclass):
         critical: Whether the component is in a critical state.
     """
     status: str
-    currentPower: float
-    chargeLevel: int
-    critical: bool
+    currentPower: Optional[float] = None
+    chargeLevel: Optional[int] = None
+    critical: Optional[bool] = None
+    timeLeft: Optional[int] = None
 
 
 @dataclass
@@ -760,11 +763,12 @@ class SiteCurrentPowerFlow(baseclass):
         STORAGE: Detailed power information for the storage system.
         connections: List of power connections between site components.
     """
-    unit: str
+    unit: Unit
+    updateRefreshRate: int
     GRID: PowerDetailInfo
     LOAD: PowerDetailInfo
     PV: PowerDetailInfo
-    STORAGE: PowerDetailInfo
+    STORAGE: Optional[PowerDetailInfo] = None
     connections: List[Connection] = field(default_factory=list)
 
 
@@ -781,6 +785,7 @@ PowerFlow = Endpoint(
     arguments=[APIArgs.SITEID],
     parms=[APIParms.API_KEY],
     response=PowerFlowResponse,
+    returns="siteCurrentPowerFlow"
 )
 
 
@@ -855,6 +860,7 @@ Storage = Endpoint(
     parms=[APIParms.API_KEY, APIParms.START_TIME,
            APIParms.END_TIME, APIParms.SERIALS],
     response=StorageDataResponse,
+    returns="storageData"
 )
 
 
@@ -983,6 +989,7 @@ Inventory = Endpoint(
     arguments=[APIArgs.SITEID],
     parms=[APIParms.API_KEY],
     response=InventoryResponse,
+    returns="Inventory"
 )
 
 
@@ -1036,7 +1043,8 @@ Components = Endpoint(
     name="Site Components",
     arguments=[APIArgs.SITEID],
     parms=[APIParms.API_KEY],
-    response=ComponentsResponse
+    response=ComponentsResponse,
+    returns="reporters"
 )
 
 
@@ -1129,46 +1137,7 @@ InverterTelemetry = Endpoint(
     arguments=[APIArgs.SITEID, APIArgs.SERIALNUMBER],
     parms=[APIParms.API_KEY, APIParms.START_TIME, APIParms.END_TIME],
     response=InverterResponse,
-)
-
-
-@dataclass
-class Version(baseclass):
-    """This dataclass describes the version information provided by Version and Supported Versions API endpoint
-
-    Attributes : release
-    """
-
-    release: str
-
-
-@dataclass
-class VersionResponse(baseclass):
-    """This dataclass describes the response from the Version API endpoint
-
-    Attributes:
-        version: The version information returned by the API, encapsulated in a Version object."""
-
-    version: Version
-
-
-CurrentVersion = Endpoint(
-    endpoint="version/current", name="Current Version", parms=[APIParms.API_KEY], response=VersionResponse
-)
-
-
-@dataclass
-class VersionsResponse(baseclass):
-    """This dataclass describes the response from the SupportedVersions API endpoint
-
-    Attributes:
-        supported: A list of Version objects representing the supported versions returned by the API."""
-
-    supported: List[Version] = field(default_factory=list)
-
-
-SupportedVersions = Endpoint(
-    endpoint="version/supported", name="Supported Versions", parms=[APIParms.API_KEY], response=VersionsResponse
+    returns="data"
 )
 
 
@@ -1198,7 +1167,6 @@ class APIList(Enum):
     Sites = Sites
     SiteInfo = SiteInfo
     SiteBenefits = SiteBenefits
-    SiteImage = SiteImage
     SiteOverview = SiteOverview
     SiteDataPeriod = SiteDataPeriod
     SiteEnergy = SiteEnergy
@@ -1211,8 +1179,6 @@ class APIList(Enum):
     Inventory = Inventory
     Components = Components
     InverterData = InverterTelemetry
-    CurrentVersion = CurrentVersion
-    SupportedVersions = SupportedVersions
 
 
 @dataclass
@@ -1238,8 +1204,6 @@ class responses(APIResponses):
     Inventory: InventoryResponse
     Components: ComponentsResponse
     InverterTelemetry: InverterResponse
-    CurrentVersion: VersionResponse
-    SupportedVersions: VersionsResponse
 
 
 @dataclass
