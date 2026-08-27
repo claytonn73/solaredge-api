@@ -8,7 +8,7 @@ import logging
 from dataclasses import dataclass, field, fields, is_dataclass
 from datetime import date, datetime, time
 from enum import Enum
-from typing import List, Optional, Type, get_args, get_origin, Any
+from typing import Type, get_args, get_origin, Any
 
 import ciso8601
 
@@ -120,12 +120,12 @@ class Endpoint:
     """Dataclass describing API endpoints and the data they return."""
 
     response: object
-    returns: Optional[str] = None
-    sample: Optional[str] = None
-    name: Optional[str] = None
+    returns: str | None = None
+    sample: str | None = None
+    name: str | None = None
     endpoint: str = ""
     type: str = "get"
-    auth: Optional[str] = None
+    auth: str | None = None
     arguments: list = field(default_factory=list)
     parms: list = field(default_factory=list)
 
@@ -158,9 +158,9 @@ class RESTClient:
     """
 
     url: str
-    responses: Type[APIResponses]    
-    apilist: Type[Enum]    
-    parameters: Optional[Any] = None
-    arguments: Optional[Any] = None
-    auth: Optional[str] = None
-    constants: Optional[Type[Enum]] = None
+    responses: type[APIResponses]    
+    apilist: type[Enum]    
+    parameters: Any | None = None
+    arguments: Any | None = None
+    auth: str | None = None
+    constants: type[Enum] | None = None

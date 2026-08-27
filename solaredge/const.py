@@ -22,7 +22,6 @@ The Solaredge instance of the RESTClient is configured to interact with the Sola
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from enum import Enum, IntEnum, StrEnum
-from typing import List, Type
 
 from solaredge.apiconstruct import (APIArguments, APIParameters, APIResponses,
                                     Endpoint, baseclass)
@@ -1230,12 +1229,12 @@ class RESTClient:
     """
 
     url: str
-    apilist: Type[Enum]
+    apilist: type[Enum]
     arguments: apiargs
     parameters: apiparms
-    constants: Type[Enum]
-    responses: Type[responses]
-    auth: Type[Enum] | None = None
+    constants: type[Enum]
+    responses: type[responses]
+    auth: type[Enum] | None = None
 
 
 # This instance of RESTClient describes the SolarEdge API
