@@ -1,0 +1,65 @@
+{
+  "name": "fixture-root",
+  "tags": [
+    "alpha",
+    "beta",
+    "gamma"
+  ],
+  "states": [
+    "ACTIVE",
+    "idle"
+  ],
+  "empty_tags": [],
+  "empty_items": [],
+  "ratio": 3.5,
+  "count": 7,
+  "enabled": true,
+  "optional_created_at": "2024-11-05T18:00:00Z",
+  "optional_nested": {
+    "occurred_on": "2024-11-03",
+    "at_time": "2024-11-03T07:45:30Z",
+    "state": "IDLE",
+    "label": "optional-nested",
+    "level": 8,
+    "ok": true,
+    "amount": 9.5
+  },
+  "optional_state": "ACTIVE",
+  "nullable_text": null,
+  "created_at": "2024-11-05T14:23:45Z",
+  "nested": {
+    "occurred_on": "2024-11-04",
+    "at_time": "2024-11-04T06:30:15Z",
+    "state": "active",
+    "label": "nested-label",
+    "level": 4,
+    "ok": false,
+    "amount": 1.25
+  },
+  "items": [
+    {
+      "timestamp": "2024-11-05T10:00:00Z",
+      "count": 2
+    },
+    {
+      "timestamp": "2024-11-05T11:15:00Z",
+      "count": 5
+    }
+  ],
+  "metadata": {
+    "phase": 3,
+    "retries": 1
+  },
+  "empty_metadata": {},
+  "keyed": {
+    "PRIMARY": {
+      "created_at": "2024-11-05T09:45:00Z",
+      "enabled": true
+    },
+    "SECONDARY": {
+      "created_at": "2024-11-05T09:50:00Z",
+      "enabled": false
+    }
+  },
+  "empty_keyed": {}
+}
