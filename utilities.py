@@ -17,19 +17,18 @@ def get_logger(destination: str = "stdout", level: str = "INFO") -> logging.Logg
     logger.setLevel(level)
     handlers = {
         "stdout": logging.StreamHandler(),
-        "syslog": logging.handlers.SysLogHandler(facility=logging.handlers.SysLogHandler.LOG_DAEMON, 
+        "syslog": logging.handlers.SysLogHandler(facility=logging.handlers.SysLogHandler.LOG_DAEMON,
                                                  address='/dev/log')
     }
-    handler : logging.Handler = handlers.get(destination)
+    handler: logging.Handler = handlers.get(destination)
     if destination == "syslog":
         log_format = 'python[%(process)d]: [%(levelname)s] %(filename)s:%(funcName)s:%(lineno)d \"%(message)s\"'
         handler.setFormatter(logging.Formatter(fmt=log_format))
     elif destination == "stdout":
         log_format = '%(asctime)s %(levelname)s %(filename)s:%(funcName)s:%(lineno)d  %(message)s'
-        handler.setFormatter(logging.Formatter(fmt=log_format))        
+        handler.setFormatter(logging.Formatter(fmt=log_format))
     logger.addHandler(handler)
     return logger
-
 
 
 def get_env() -> dict:
@@ -50,7 +49,8 @@ class InfluxConnection:
     def connect(self):
         """Context manager that ensures the InfluxDB connection is closed."""
         try:
-            influxdb_client = influxdb.InfluxDBClient(host='localhost', port=8086)
+            influxdb_client = influxdb.InfluxDBClient(
+                host='localhost', port=8086)
             if self.reset:
                 influxdb_client.drop_database(self.database)
                 influxdb_client.create_database(self.database)

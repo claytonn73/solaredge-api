@@ -318,7 +318,7 @@ class Site(baseclass):
     Attributes:
         id: The Site ID which is used as a parameter in other API requests
 
-        name, accountId, status, peakPower, lastUpdateTime, 
+        name, accountId, status, peakPower, lastUpdateTime,
         installationDate, ptoDate, notes, type, location, primaryModule,
         uris, publicSettings
 
@@ -604,7 +604,7 @@ class TimeFrameEnergyData(baseclass):
 class TimeFrameEnergyResponse(baseclass):
     """Represents the response from the Site Energy Timeframe API endpoint.
 
-    This dataclass contains energy data for a site over a specific time frame, 
+    This dataclass contains energy data for a site over a specific time frame,
     including total energy and lifetime values.
     """
     timeFrameEnergy: TimeFrameEnergyData
