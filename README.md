@@ -8,7 +8,7 @@ This is a package for connecting to the SolarEdge API. It has been tested on Inv
 import solaredge
 
 def main():
-    with  SolaredgeClient(apikey='solaredge_apikey') as client:
+    with  solaredge.SolaredgeClient(apikey='solaredge_apikey') as client:
         for site in client.get_sites():
             pprint.pprint(site)
 
@@ -20,3 +20,6 @@ The sample programs use a .env file with the serial and password contained in it
 ```text
 solaredge_apikey = "1234567abcedf"
 ```
+
+The telemetry.py and consumption.py scripts provide examples of using to load statistics
+into influxdb.
