@@ -539,8 +539,7 @@ class Value(baseclass):
     def __post_init__(self):
         if self.value is None:
             self.value = 0.0
-        super(Value, self).__post_init__(
-        )  # pylint: disable=super-with-arguments
+        super(Value, self).__post_init__()  # pylint: disable=super-with-arguments
 
 
 @dataclass(slots=True)
