@@ -8,7 +8,7 @@ import logging
 from dataclasses import dataclass, field, fields, is_dataclass
 from datetime import date, datetime, time
 from enum import Enum
-from typing import get_args, get_origin, Any
+from typing import Any, get_args, get_origin
 
 import ciso8601
 

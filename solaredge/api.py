@@ -2,8 +2,8 @@
 
 import enum
 import logging
-from datetime import datetime, timedelta
-from typing import Literal, overload
+from datetime import UTC, datetime, timedelta
+from typing import Literal, Self, overload
 
 import requests
 import ujson
@@ -38,7 +38,7 @@ class SolaredgeClient:
         self._session.mount(self._api.url, HTTPAdapter(max_retries=3))
         self._initialize_data()
 
-    def __enter__(self) -> "SolaredgeClient":
+    def __enter__(self) -> Self:
         """Entry function for the Solaredge Client."""
         return self
 
@@ -104,7 +104,7 @@ class SolaredgeClient:
             start (int, optional): Number of days ago from today to use as the start date. Defaults to 1.
             end (int, optional): Number of days ago from today to use as the end date. Defaults to 0.
         """
-        now = datetime.now()
+        now = datetime.now(tz=UTC)
         self._api.parameters.startTime = (now - timedelta(days=start)).strftime(
             f"{DateFormats.DATE.value} 00:00:00"
         )
@@ -121,7 +121,7 @@ class SolaredgeClient:
         """Set the startDate and endDate parameters for the API
            redundant with set_datetimes but kept for backward compatibility
         """
-        now = datetime.now()
+        now = datetime.now(tz=UTC)
         self._api.parameters.startDate = (
             now - timedelta(days=start)).strftime(DateFormats.DATE.value)
         self._api.parameters.endDate = (
@@ -412,11 +412,11 @@ class SolaredgeClient:
             raise
         try:
             results_json = results.json()
-        except ValueError as err:
+        except ValueError:
             # requests may raise a ValueError (or a JSONDecodeError subclass) when
             # the response body isn't valid JSON. Be defensive and catch ValueError
             # to avoid relying on implementation details of requests/simplejson.
-            logger.exception("JSON decoder error encountered: %s", err)
+            logger.exception("JSON decoder error encountered for API endpoint=%s", api.name)
             raise
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug("Formatted API results:\n %s",
@@ -425,5 +425,4 @@ class SolaredgeClient:
             data = api.value.response.parse_kwargs(  # type: ignore
                 self, api.value.response, **results_json)
             return getattr(data, api.value.returns)
-        # type: ignore
-        return api.value.response.parse_kwargs(self, api.value.response, **results_json)
+        return api.value.response.parse_kwargs(self, api.value.response, **results_json) # type: ignore

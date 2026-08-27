@@ -20,16 +20,20 @@ The Solaredge instance of the RESTClient is configured to interact with the Sola
 """
 
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from enum import Enum, IntEnum, StrEnum
 
-from solaredge.apiconstruct import (APIArguments, APIParameters, APIResponses,
-                                    Endpoint, baseclass)
+from solaredge.apiconstruct import (
+    APIArguments,
+    APIParameters,
+    APIResponses,
+    Endpoint,
+    baseclass,
+)
 
 
 class TimeUnit(StrEnum):
-    """This enum describes the different time units in which data can be returned.
-    """
+    """This enum describes the different time units in which data can be returned."""
 
     QUARTER_OF_AN_HOUR = "QUARTER_OF_AN_HOUR"
     HOUR = "HOUR"
@@ -40,8 +44,8 @@ class TimeUnit(StrEnum):
 
 
 class Unit(StrEnum):
-    """Enumeration of unit types for energy and power measurements.
-    """
+    """Enumeration of unit types for energy and power measurements."""
+
     WATT = "W"
     KILOWATT = "kW"
     WATT_HOUR = "Wh"
@@ -49,16 +53,16 @@ class Unit(StrEnum):
 
 
 class Currency(StrEnum):
-    """Enumeration of supported currency types for site financial data.
-    """
+    """Enumeration of supported currency types for site financial data."""
+
     EUR = "Euro"
     GBP = "Pounds Sterling"
     USD = "US Dollar"
 
 
 class Order(StrEnum):
-    """Enumeration of sorting order options for API queries.
-    """
+    """Enumeration of sorting order options for API queries."""
+
     ASCENDING = "ASC"
     DESCENDING = "DESC"
 
@@ -84,6 +88,7 @@ class Property(StrEnum):
 
     This enum lists the available site attributes that can be referenced for sorting, filtering, or display.
     """
+
     NAME = "Name"
     COUNTRY = "Country"
     STATE = "State"
@@ -103,6 +108,7 @@ class Meters(StrEnum):
 
     This enum specifies the different categories of energy measurement available from the API.
     """
+
     PRODUCTION = "Production"
     CONSUMPTION = "Consumption"
     SELFCONSUMPTION = "SelfConsumption"
@@ -115,6 +121,7 @@ class Metrics(StrEnum):
 
     This enum specifies whether data is provided in metric or imperial units.
     """
+
     METRIC = "Metric"
     IMPERIAL = "Imperial"
 
@@ -149,6 +156,7 @@ class OperationMode(IntEnum):
     This enum maps the numeric mode codes returned by the SolarEdge API to
     named constants.
     """
+
     ON_GRID = 0
     OFF_GRID_PV_BATTERY = 1
     OFF_GRID_GENERATOR = 2
@@ -199,11 +207,12 @@ class DateFormats(StrEnum):
 
     This enum specifies the string formatting patterns for dates and datetimes.
     """
+
     DATE = "%Y-%m-%d"
     MONTH = "%Y %m"
     YEAR = "%Y"
     DATETIME = "%Y-%m-%d %H:%M:%S"
-    DATETIMET = '%Y-%m-%dT%H:%MZ'
+    DATETIMET = "%Y-%m-%dT%H:%MZ"
 
 
 @dataclass(slots=True)
@@ -215,6 +224,7 @@ class apiparms(APIParameters):
     imported.  By using ``default_factory`` we recompute each time an instance
     is created.
     """
+
     size: int = 100
     startIndex: int = 0
     searchText: str | None = None
@@ -223,18 +233,20 @@ class apiparms(APIParameters):
     Status: SiteStatus = SiteStatus.ALL
     api_key: str | None = None
     startDate: str = field(
-        default_factory=lambda: (
-            datetime.now() - timedelta(days=1)).strftime(DateFormats.DATE.value)
+        default_factory=lambda: (datetime.now(tz=UTC) - timedelta(days=1)).strftime(
+            DateFormats.DATE.value
+        )
     )
     endDate: str = field(
-        default_factory=lambda: datetime.now().strftime(DateFormats.DATE.value)
+        default_factory=lambda: datetime.now(tz=UTC).strftime(DateFormats.DATE.value)
     )
     startTime: str = field(
-        default_factory=lambda: (
-            datetime.now() - timedelta(days=1)).strftime(DateFormats.DATETIME.value)
+        default_factory=lambda: (datetime.now(tz=UTC) - timedelta(days=1)).strftime(
+            DateFormats.DATETIME.value
+        )
     )
     endTime: str = field(
-        default_factory=lambda: datetime.now().strftime(DateFormats.DATETIME.value)
+        default_factory=lambda: datetime.now(tz=UTC).strftime(DateFormats.DATETIME.value)
     )
     timeUnit: TimeUnit = TimeUnit.HOUR
     meters: Meters | None = None
@@ -256,7 +268,7 @@ class Location(baseclass):
         state: The state where the site is located - not on details API call
         latitude: The latitude coordinate of the site  - only on details API call
         longitude: The longitude coordinate of the site  - only on details API call
-        """
+    """
 
     country: str
     city: str
@@ -280,6 +292,7 @@ class PrimaryModule(baseclass):
         maximumPower: Maximum power rating (kW or W as returned by API).
         temperatureCoef: Temperature coefficient value for the module.
     """
+
     manufacturerName: str
     modelName: str
     maximumPower: float
@@ -293,6 +306,7 @@ class Uris(baseclass):
     These fields contain endpoint fragments or paths that can be used to
     construct full URLs for site images, data periods, details and overview.
     """
+
     DATA_PERIOD: str
     DETAILS: str
     OVERVIEW: str
@@ -307,6 +321,7 @@ class PublicSettings(baseclass):
         isPublic: Whether the site is publicly visible.
         name: Optional public display name for the site.
     """
+
     isPublic: bool
     name: str | None = None
 
@@ -427,7 +442,7 @@ class EnvBenefits(baseclass):
         gasEmissionSaved: The gas emissions savings information.
         treesPlanted: The equivalent number of trees planted.
         lightBulbs: The equivalent number of light bulbs powered.
-        """
+    """
 
     gasEmissionSaved: GasEmissionSaved
     treesPlanted: float
@@ -451,7 +466,7 @@ SiteBenefits = Endpoint(
     arguments=[APIArgs.SITEID],
     parms=[APIParms.API_KEY],
     response=EnvBenefitsResponse,
-    returns="envBenefits"
+    returns="envBenefits",
 )
 
 
@@ -496,7 +511,7 @@ SiteOverview = Endpoint(
     arguments=[APIArgs.SITEID],
     parms=[APIParms.API_KEY],
     response=OverviewResponse,
-    returns="overview"
+    returns="overview",
 )
 
 
@@ -523,7 +538,7 @@ SiteDataPeriod = Endpoint(
     arguments=[APIArgs.SITEID],
     parms=[APIParms.API_KEY],
     response=SiteDataPeriodResponse,
-    returns="dataPeriod"
+    returns="dataPeriod",
 )
 
 
@@ -533,6 +548,7 @@ class Value(baseclass):
 
     This dataclass contains a datetime and its associated numeric value, used in various API responses.
     """
+
     date: datetime
     value: float | None = 0.0
 
@@ -548,6 +564,7 @@ class EnergyData(baseclass):
 
     This dataclass contains the time unit, unit type, a list of timestamped values, and the measurement source.
     """
+
     timeUnit: TimeUnit
     unit: Unit
     values: list[Value] = field(default_factory=list)
@@ -560,6 +577,7 @@ class EnergyDataResponse(baseclass):
 
     This dataclass contains the energy data for a site, including time unit, unit type, values, and measurement source.
     """
+
     energy: EnergyData
 
 
@@ -567,11 +585,15 @@ SiteEnergy = Endpoint(
     endpoint="site/{siteid}/energy",
     name="Site Energy",
     arguments=[APIArgs.SITEID],
-    parms=[APIParms.API_KEY, APIParms.START_DATE,
-           APIParms.END_DATE, APIParms.TIME_UNIT],
+    parms=[
+        APIParms.API_KEY,
+        APIParms.START_DATE,
+        APIParms.END_DATE,
+        APIParms.TIME_UNIT,
+    ],
     sample="site_energy.json",
     response=EnergyDataResponse,
-    returns="energy"
+    returns="energy",
 )
 
 
@@ -581,6 +603,7 @@ class EnergyValue(baseclass):
 
     This dataclass contains a datetime, the energy value, and its unit as returned by the API.
     """
+
     date: datetime
     energy: float
     unit: Unit
@@ -593,6 +616,7 @@ class TimeFrameEnergyData(baseclass):
     This dataclass contains the total energy, unit, measurement source,
     and lifetime energy values at the start and end of the period.
     """
+
     energy: float
     unit: Unit
     measuredBy: str
@@ -607,6 +631,7 @@ class TimeFrameEnergyResponse(baseclass):
     This dataclass contains energy data for a site over a specific time frame,
     including total energy and lifetime values.
     """
+
     timeFrameEnergy: TimeFrameEnergyData
 
 
@@ -616,7 +641,7 @@ SiteEnergyTimeframe = Endpoint(
     arguments=[APIArgs.SITEID],
     parms=[APIParms.API_KEY, APIParms.START_DATE, APIParms.END_DATE],
     response=TimeFrameEnergyResponse,
-    returns="timeFrameEnergy"
+    returns="timeFrameEnergy",
 )
 
 
@@ -661,10 +686,15 @@ EnergyDetails = Endpoint(
     endpoint="site/{siteid}/energyDetails",
     name="Site Energy - Details",
     arguments=[APIArgs.SITEID],
-    parms=[APIParms.API_KEY, APIParms.START_TIME,
-           APIParms.END_TIME, APIParms.TIME_UNIT, APIParms.METERS],
+    parms=[
+        APIParms.API_KEY,
+        APIParms.START_TIME,
+        APIParms.END_TIME,
+        APIParms.TIME_UNIT,
+        APIParms.METERS,
+    ],
     response=EnergyDetailResponse,
-    returns="energyDetails"
+    returns="energyDetails",
 )
 
 
@@ -682,10 +712,9 @@ PowerDetails = Endpoint(
     endpoint="site/{siteid}/powerDetails",
     name="Site Power - Details",
     arguments=[APIArgs.SITEID],
-    parms=[APIParms.API_KEY, APIParms.START_TIME,
-           APIParms.END_TIME, APIParms.METERS],
+    parms=[APIParms.API_KEY, APIParms.START_TIME, APIParms.END_TIME, APIParms.METERS],
     response=PowerDetailsResponse,
-    returns="powerDetails"
+    returns="powerDetails",
 )
 
 
@@ -699,6 +728,7 @@ class PowerData(baseclass):
         measuredBy: The source of the measurement.
         values: A Listof timestamped power values.
     """
+
     timeUnit: TimeUnit
     unit: Unit
     measuredBy: str | None = None
@@ -718,7 +748,7 @@ Power = Endpoint(
     arguments=[APIArgs.SITEID],
     parms=[APIParms.API_KEY, APIParms.START_TIME, APIParms.END_TIME],
     response=PowerDataResponse,
-    returns="power"
+    returns="power",
 )
 
 
@@ -729,6 +759,7 @@ class Connection:
     The JSON fields are named `from` and `to`, but the dataclass uses
     `from_` and `to_` to avoid using the Python keyword `from`.
     """
+
     from_: str | None = None
     to_: str | None = None
 
@@ -743,6 +774,7 @@ class PowerDetailInfo(baseclass):
         chargeLevel: The charge level, if applicable.
         critical: Whether the component is in a critical state.
     """
+
     status: str
     currentPower: float | None = None
     chargeLevel: int | None = None
@@ -762,6 +794,7 @@ class SiteCurrentPowerFlow(baseclass):
         STORAGE: Detailed power information for the storage system.
         connections: List of power connections between site components.
     """
+
     unit: Unit
     updateRefreshRate: int
     GRID: PowerDetailInfo
@@ -784,7 +817,7 @@ PowerFlow = Endpoint(
     arguments=[APIArgs.SITEID],
     parms=[APIParms.API_KEY],
     response=PowerFlowResponse,
-    returns="siteCurrentPowerFlow"
+    returns="siteCurrentPowerFlow",
 )
 
 
@@ -802,6 +835,7 @@ class BatteryTelemetry(baseclass):
         internalTemp: The internal temperature of the battery.
         ACGridCharging: The amount of AC grid charging.
     """
+
     timeStamp: str
     power: int
     batteryState: int
@@ -823,6 +857,7 @@ class Battery(baseclass):
         telemetryCount: The number of telemetry records.
         telemetries: A list of telemetry data for the battery.
     """
+
     nameplate: int
     serialNumber: str
     modelNumber: str
@@ -838,6 +873,7 @@ class StorageData(baseclass):
         batteryCount: The number of batteries included in the response.
         batteries: A list of battery information and telemetry data.
     """
+
     batteryCount: int
     batteries: list[Battery] = field(default_factory=list)
 
@@ -849,6 +885,7 @@ class StorageDataResponse(baseclass):
     Attributes:
         storageData: The storage data containing battery information and telemetry.
     """
+
     storageData: StorageData
 
 
@@ -856,10 +893,9 @@ Storage = Endpoint(
     endpoint="site/{siteid}/storageData",
     name="Battery Telemetry",
     arguments=[APIArgs.SITEID],
-    parms=[APIParms.API_KEY, APIParms.START_TIME,
-           APIParms.END_TIME, APIParms.SERIALS],
+    parms=[APIParms.API_KEY, APIParms.START_TIME, APIParms.END_TIME, APIParms.SERIALS],
     response=StorageDataResponse,
-    returns="storageData"
+    returns="storageData",
 )
 
 
@@ -988,7 +1024,7 @@ Inventory = Endpoint(
     arguments=[APIArgs.SITEID],
     parms=[APIParms.API_KEY],
     response=InventoryResponse,
-    returns="Inventory"
+    returns="Inventory",
 )
 
 
@@ -1042,7 +1078,7 @@ Components = Endpoint(
     arguments=[APIArgs.SITEID],
     parms=[APIParms.API_KEY],
     response=ComponentsResponse,
-    returns="reporters"
+    returns="reporters",
 )
 
 
@@ -1096,8 +1132,9 @@ class Telemetry(baseclass):
     temperature: float
     inverterMode: InverterMode
     operationMode: OperationMode
-    L1Data: LData = field(default_factory=lambda: LData(
-        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
+    L1Data: LData = field(
+        default_factory=lambda: LData(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+    )
     L2Data: LData | None = None
     L3Data: LData | None = None
     groundFaultResistance: float | None = 0.0
@@ -1135,7 +1172,7 @@ InverterTelemetry = Endpoint(
     arguments=[APIArgs.SITEID, APIArgs.SERIALNUMBER],
     parms=[APIParms.API_KEY, APIParms.START_TIME, APIParms.END_TIME],
     response=InverterResponse,
-    returns="data"
+    returns="data",
 )
 
 
@@ -1186,6 +1223,7 @@ class responses(APIResponses):
     This dataclass is used by the `RESTClient` configuration to know which
     dataclass should be used to parse each API endpoint's JSON response.
     """
+
     Sites: SitesResponse
     SiteInfo: SiteInfoResponse
     SiteBenefits: EnvBenefitsResponse
@@ -1243,5 +1281,5 @@ Solaredge = RESTClient(
     arguments=apiargs(),
     parameters=apiparms(),
     constants=ConstantList,
-    responses=responses
+    responses=responses,
 )
