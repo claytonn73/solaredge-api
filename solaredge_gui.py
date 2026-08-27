@@ -4,7 +4,7 @@ import tkinter as tk
 from tkinter import messagebox, scrolledtext, ttk
 
 from solaredge.api import SolaredgeClient
-from utilities import get_env, get_logger
+from utilities import get_env
 
 
 class SolarEdgeGUI(tk.Tk):
@@ -80,18 +80,17 @@ class SolarEdgeGUI(tk.Tk):
             method = getattr(self.api_client, data_type)
             if isinstance(method, list):
                 result = method
+            elif "site_id" in method.__code__.co_varnames:
+                if not site_id:
+                    messagebox.showerror(
+                        "Error", "Site ID is required for this data type.")
+                    return
+                result = method(int(site_id))
             else:
-                if "site_id" in method.__code__.co_varnames:
-                    if not site_id:
-                        messagebox.showerror(
-                            "Error", "Site ID is required for this data type.")
-                        return
-                    result = method(int(site_id))
-                else:
-                    result = method()
+                result = method()
             self.result_text.delete(1.0, tk.END)
             self.result_text.insert(tk.END, pprint.pformat(result, width=120))
-        except Exception as e:
+        except Exception as e: #ignore W0718
             messagebox.showerror("API Error", str(e))
 
 
