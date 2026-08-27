@@ -23,13 +23,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
 from enum import Enum, IntEnum, StrEnum
 
-from solaredge.apiconstruct import (
-    APIArguments,
-    APIParameters,
-    APIResponses,
-    Endpoint,
-    baseclass,
-)
+from solaredge.apiconstruct import APIArguments, APIParameters, APIResponses, Endpoint, baseclass
 
 
 class TimeUnit(StrEnum):
@@ -550,7 +544,7 @@ class Value(baseclass):
     """
 
     date: datetime
-    value: float | None = 0.0
+    value: float = 0.0
 
     def __post_init__(self):
         if self.value is None:
@@ -986,7 +980,7 @@ class Inverter(baseclass):
     site: int | None = None
 
 
-@dataclass
+@dataclass(slots=True)
 class InventoryData(baseclass):
     """This dataclass describes the information provided by the Inventory API Endpoint
 
