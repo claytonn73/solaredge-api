@@ -17,6 +17,7 @@ __all__ = ["SolaredgeClient"]
 
 logger = logging.getLogger(__name__)
 
+
 class SolaredgeClient:
     """This class enables queries to be performed using the Solaredge REST API"""
 
@@ -117,7 +118,7 @@ class SolaredgeClient:
             now - timedelta(days=end)).strftime(DateFormats.DATE.value)
 
     def set_dates(self, start: int = 1, end: int = 0) -> None:
-        """Set the startDate and endDate parameters for the API 
+        """Set the startDate and endDate parameters for the API
            redundant with set_datetimes but kept for backward compatibility
         """
         now = datetime.now()
@@ -145,7 +146,7 @@ class SolaredgeClient:
         """
         if site_id is not None:
             self._api.arguments.siteid = site_id
-        # If the siteid argument is still none then it was not set initially or 
+        # If the siteid argument is still none then it was not set initially or
         # provided to the method, so raise an error
         if self._api.arguments.siteid is None:
             raise ValueError(
@@ -408,7 +409,7 @@ class SolaredgeClient:
             results.raise_for_status()
         except requests.exceptions.RequestException:
             logger.exception("Request failed for API endpoint=%s", api.name)
-            raise 
+            raise
         try:
             results_json = results.json()
         except ValueError as err:
@@ -419,10 +420,10 @@ class SolaredgeClient:
             raise
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug("Formatted API results:\n %s",
-                              ujson.dumps(results_json, indent=2))
+                         ujson.dumps(results_json, indent=2))
         if api.value.returns is not None:
-            data = api.value.response.parse_kwargs( # type: ignore
-                self, api.value.response, **results_json)  
+            data = api.value.response.parse_kwargs(  # type: ignore
+                self, api.value.response, **results_json)
             return getattr(data, api.value.returns)
         # type: ignore
-        return api.value.response.parse_kwargs(self, api.value.response, **results_json) # type: ignore
+        return api.value.response.parse_kwargs(self, api.value.response, **results_json)

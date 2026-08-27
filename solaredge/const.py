@@ -347,7 +347,7 @@ class Site(baseclass):
 @dataclass(slots=True)
 class SiteList(baseclass):
     """This dataclass describes the list of sites provided by the Sites API endpoint
-    
+
     Attributes: count - count of sites
                 site - a list of site information
     """
@@ -539,11 +539,11 @@ class Value(baseclass):
     def __post_init__(self):
         if self.value is None:
             self.value = 0.0
-        super(Value, self).__post_init__() # pylint: disable=super-with-arguments
+        super(Value, self).__post_init__(
+        )  # pylint: disable=super-with-arguments
 
 
-
-@dataclass(slots=True)  
+@dataclass(slots=True)
 class EnergyData(baseclass):
     """Represents energy data for a site over a specified time period.
 
@@ -552,7 +552,7 @@ class EnergyData(baseclass):
     timeUnit: TimeUnit
     unit: Unit
     values: list[Value] = field(default_factory=list)
-    measuredBy: str | None= None
+    measuredBy: str | None = None
 
 
 @dataclass(slots=True)
@@ -702,7 +702,7 @@ class PowerData(baseclass):
     """
     timeUnit: TimeUnit
     unit: Unit
-    measuredBy: str | None= None
+    measuredBy: str | None = None
     values: list[Value] = field(default_factory=list)
 
 
@@ -730,8 +730,8 @@ class Connection:
     The JSON fields are named `from` and `to`, but the dataclass uses
     `from_` and `to_` to avoid using the Python keyword `from`.
     """
-    from_: str | None= None
-    to_: str | None= None
+    from_: str | None = None
+    to_: str | None = None
 
 
 @dataclass(slots=True)
@@ -871,7 +871,7 @@ class Meter(baseclass):
     name: str
     manufacturer: str
     model: str
-    SN: str | None= None
+    SN: str | None = None
 
 
 @dataclass(slots=True)

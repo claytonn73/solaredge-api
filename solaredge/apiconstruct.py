@@ -14,31 +14,32 @@ import ciso8601
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass(slots=True)
 class baseclass:
     """This dataclass provides the post_init code to handle the nested dataclasses
     and formatting of datetime entries"""
 
     def parse_kwargs(self, cls, **kwargs: dict):
-        # If the key is in our reserved map, rename it; otherwise keep it as-is                
-        reserved_map = {'class': 'class_', 'for': 'for_', 'from': 'from_', 'to': 'to_', 'list': 'list_'}
+        # If the key is in our reserved map, rename it; otherwise keep it as-is
+        reserved_map = {'class': 'class_', 'for': 'for_',
+                        'from': 'from_', 'to': 'to_', 'list': 'list_'}
 
-        for key in list(kwargs.keys()):           
+        for key in list(kwargs.keys()):
             if key in reserved_map:
                 new_key = reserved_map.get(key, key)
                 kwargs[new_key] = kwargs.pop(key)
-        #Parse only keywords that are defined in the dataclass definition
+        # Parse only keywords that are defined in the dataclass definition
         for k in kwargs:
             if k not in cls.__match_args__:
-                logger.error("%s got an unexpected keyword argument %s", cls.__name__, k)
+                logger.error(
+                    "%s got an unexpected keyword argument %s", cls.__name__, k)
         return cls(**{
             key: value for key, value in kwargs.items()
             if key in cls.__match_args__
         })
 
-
-
-    def process_enum(self, entry_type : type[Enum] , entry_value: str) -> Enum | str:
+    def process_enum(self, entry_type: type[Enum], entry_value: str) -> Enum | str:
         """Process an Enum entry type"""
         try:
             return entry_type[entry_value]
@@ -55,7 +56,7 @@ class baseclass:
         for entry in fields(self):
             if (entry_value := getattr(self, entry.name)) is None:
                 continue
-            entry_type : Any = entry.type
+            entry_type: Any = entry.type
             if self.is_optional(entry_type):
                 entry_type = next(
                     field_type for field_type in get_args(entry_type)
@@ -71,32 +72,38 @@ class baseclass:
                 continue
             # If the entry type is date then convert it from a string to a date object
             elif entry_type is date:
-                setattr(self, entry.name, ciso8601.parse_datetime(entry_value).date())
+                setattr(self, entry.name, ciso8601.parse_datetime(
+                    entry_value).date())
             # If the entry type is time then convert it from a string to a time object
             elif entry_type is time:
-                setattr(self, entry.name, ciso8601.parse_datetime(entry_value).time())
+                setattr(self, entry.name, ciso8601.parse_datetime(
+                    entry_value).time())
             # If the entry type is a list
             elif get_origin(entry_type) is list:
-                list_type : type = get_args(entry_type)[0]
+                list_type: type = get_args(entry_type)[0]
                 # If the type of the list entry is a dataclass then parse each entry of the list into the dataclass
                 if (is_dataclass(list_type)) and (bool(entry_value)):
                     for index, data in enumerate(entry_value):
-                        entry_value[index] = self.parse_kwargs(list_type, **(data))
+                        entry_value[index] = self.parse_kwargs(
+                            list_type, **(data))
                 # If the type of the list entry is an Enum then convert it to an Enum entry
                 elif issubclass(list_type, Enum):
                     setattr(
                         self,
                         entry.name,
-                        [self.process_enum(list_type, data) for data in entry_value],
+                        [self.process_enum(list_type, data)
+                         for data in entry_value],
                     )
             # If the entry type is a dataclass and the entry is not null then parse the entry into the dataclass
             elif (is_dataclass(entry_type)) and (bool(entry_value)):
                 setattr(
-                    self, entry.name, self.parse_kwargs(entry_type, **(entry_value))
+                    self, entry.name, self.parse_kwargs(
+                        entry_type, **(entry_value))
                 )
             # If the entry type is an Enum then convert it to an Enum entry
             elif issubclass(entry_type, Enum):
-                setattr(self,entry.name, self.process_enum(entry_type, entry_value))
+                setattr(self, entry.name, self.process_enum(
+                    entry_type, entry_value))
             # If the entry type is a dict and the entry is not null
             elif (get_origin(entry_type) is dict) and (bool(entry_value)):
                 # Create a new dict in case we have to change the index
@@ -141,6 +148,7 @@ class APIArguments:
 class APIParameters:
     """Dataclass describing the set of parameters used by the API endpoints."""
 
+
 @dataclass
 class APIResponses:
     """Dataclass describing the set of parameters used by the API endpoints."""
@@ -160,8 +168,8 @@ class RESTClient:
     """
 
     url: str
-    responses: type[APIResponses]    
-    apilist: type[Enum]    
+    responses: type[APIResponses]
+    apilist: type[Enum]
     parameters: Any | None = None
     arguments: Any | None = None
     auth: str | None = None

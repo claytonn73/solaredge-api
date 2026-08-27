@@ -11,6 +11,7 @@ dependencies = [
     "influxdb",
     "argparse",
     "ujson",
+    "ciso8601",
 ]
 authors = [
   { name="Nick Clayton"},
