@@ -22,7 +22,7 @@ The Solaredge instance of the RESTClient is configured to interact with the Sola
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from enum import Enum, IntEnum, StrEnum
-from typing import List, Optional, Type
+from typing import List, Type
 
 from solaredge.apiconstruct import (APIArguments, APIParameters, APIResponses,
                                     Endpoint, baseclass)
@@ -171,8 +171,8 @@ class apiargs(APIArguments):
         serialnumber: The serial number of the inverter for which to retrieve data.
     """
 
-    siteid: Optional[int] = None
-    serialnumber: Optional[str] = None
+    siteid: int | None = None
+    serialnumber: str | None = None
 
 
 class APIParms(StrEnum):
@@ -218,11 +218,11 @@ class apiparms(APIParameters):
     """
     size: int = 100
     startIndex: int = 0
-    searchText: Optional[str] = None
-    sortProperty: Optional[Property] = None
+    searchText: str | None = None
+    sortProperty: Property | None = None
     sortOrder: Order = Order.ASCENDING
     Status: SiteStatus = SiteStatus.ALL
-    api_key: Optional[str] = None
+    api_key: str | None = None
     startDate: str = field(
         default_factory=lambda: (
             datetime.now() - timedelta(days=1)).strftime(DateFormats.DATE.value)
@@ -238,8 +238,8 @@ class apiparms(APIParameters):
         default_factory=lambda: datetime.now().strftime(DateFormats.DATETIME.value)
     )
     timeUnit: TimeUnit = TimeUnit.HOUR
-    meters: Optional[Meters] = None
-    serials: Optional[str] = None
+    meters: Meters | None = None
+    serials: str | None = None
     systemUnits: Metrics = Metrics.METRIC
 
 
@@ -266,9 +266,9 @@ class Location(baseclass):
     zip: str
     timeZone: str
     countryCode: str
-    state: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
+    state: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
 
 
 @dataclass
@@ -297,7 +297,7 @@ class Uris(baseclass):
     DATA_PERIOD: str
     DETAILS: str
     OVERVIEW: str
-    SITE_IMAGE: Optional[str] = None
+    SITE_IMAGE: str | None = None
 
 
 @dataclass
@@ -309,7 +309,7 @@ class PublicSettings(baseclass):
         name: Optional public display name for the site.
     """
     isPublic: bool
-    name: Optional[str] = None
+    name: str | None = None
 
 
 @dataclass
@@ -341,8 +341,8 @@ class Site(baseclass):
     uris: Uris
     publicSettings: PublicSettings
     alertQuantity: int = 0
-    currency: Optional[Currency] = None
-    alertSeverity: Optional[str] = None
+    currency: Currency | None = None
+    alertSeverity: str | None = None
 
 
 @dataclass
@@ -354,7 +354,7 @@ class SiteList(baseclass):
     """
 
     count: int
-    site: List[Site] = field(default_factory=list)
+    site: list[Site] = field(default_factory=list)
 
 
 @dataclass
@@ -461,7 +461,7 @@ class Summary(baseclass):
     """This dataclass describes the historical summary data returned by the SiteOverview API"""
 
     energy: float
-    revenue: Optional[float] = None
+    revenue: float | None = None
 
 
 @dataclass
@@ -553,8 +553,8 @@ class EnergyData(baseclass):
     """
     timeUnit: TimeUnit
     unit: Unit
-    values: List[Value] = field(default_factory=list)
-    measuredBy: Optional[str] = None
+    values: list[Value] = field(default_factory=list)
+    measuredBy: str | None= None
 
 
 @dataclass
@@ -631,7 +631,7 @@ class DataType(baseclass):
                  values - a list of values of this type"""
 
     type: str
-    values: List[Value] = field(default_factory=list)
+    values: list[Value] = field(default_factory=list)
 
 
 @dataclass
@@ -646,7 +646,7 @@ class DetailData(baseclass):
 
     timeUnit: TimeUnit
     unit: Unit
-    meters: List[DataType] = field(default_factory=list)
+    meters: list[DataType] = field(default_factory=list)
 
 
 @dataclass
@@ -704,7 +704,7 @@ class PowerData(baseclass):
     """
     timeUnit: TimeUnit
     unit: Unit
-    measuredBy: Optional[str] = None
+    measuredBy: str | None= None
     values: list[Value] = field(default_factory=list)
 
 
@@ -732,8 +732,8 @@ class Connection:
     The JSON fields are named `from` and `to`, but the dataclass uses
     `from_` and `to_` to avoid using the Python keyword `from`.
     """
-    from_: Optional[str] = None
-    to_: Optional[str] = None
+    from_: str | None= None
+    to_: str | None= None
 
 
 @dataclass
@@ -747,10 +747,10 @@ class PowerDetailInfo(baseclass):
         critical: Whether the component is in a critical state.
     """
     status: str
-    currentPower: Optional[float] = None
-    chargeLevel: Optional[int] = None
-    critical: Optional[bool] = None
-    timeLeft: Optional[int] = None
+    currentPower: float | None = None
+    chargeLevel: int | None = None
+    critical: bool | None = None
+    timeLeft: int | None = None
 
 
 @dataclass
@@ -770,8 +770,8 @@ class SiteCurrentPowerFlow(baseclass):
     GRID: PowerDetailInfo
     LOAD: PowerDetailInfo
     PV: PowerDetailInfo
-    STORAGE: Optional[PowerDetailInfo] = None
-    connections: List[Connection] = field(default_factory=list)
+    STORAGE: PowerDetailInfo | None = None
+    connections: list[Connection] = field(default_factory=list)
 
 
 @dataclass
@@ -830,7 +830,7 @@ class Battery(baseclass):
     serialNumber: str
     modelNumber: str
     telemetryCount: int
-    telemetries: List[BatteryTelemetry] = field(default_factory=list)
+    telemetries: list[BatteryTelemetry] = field(default_factory=list)
 
 
 @dataclass
@@ -842,7 +842,7 @@ class StorageData(baseclass):
         batteries: A list of battery information and telemetry data.
     """
     batteryCount: int
-    batteries: List[Battery] = field(default_factory=list)
+    batteries: list[Battery] = field(default_factory=list)
 
 
 @dataclass
@@ -873,7 +873,7 @@ class Meter(baseclass):
     name: str
     manufacturer: str
     model: str
-    SN: Optional[str] = None
+    SN: str | None= None
 
 
 @dataclass
@@ -950,7 +950,7 @@ class Inverter(baseclass):
     cpuVersion: str
     connectedOptimizers: int
     partNumber: str
-    site: Optional[int] = None
+    site: int | None = None
 
 
 @dataclass
@@ -966,12 +966,12 @@ class InventoryData(baseclass):
         site : The site ID is added as an additional attribute but not returned by the API
     """
 
-    meters: List[Meter] = field(default_factory=list)
-    sensors: List[Sensor] = field(default_factory=list)
-    gateways: List[Gateway] = field(default_factory=list)
-    batteries: List[BatteryInventory] = field(default_factory=list)
-    inverters: List[Inverter] = field(default_factory=list)
-    site: Optional[int] = None
+    meters: list[Meter] = field(default_factory=list)
+    sensors: list[Sensor] = field(default_factory=list)
+    gateways: list[Gateway] = field(default_factory=list)
+    batteries: list[BatteryInventory] = field(default_factory=list)
+    inverters: list[Inverter] = field(default_factory=list)
+    site: int | None = None
 
 
 @dataclass
@@ -1013,7 +1013,7 @@ class ComponentEntry(baseclass):
     model: str
     serialNumber: str
     kWpDC: str
-    site: Optional[int] = None
+    site: int | None = None
 
 
 @dataclass
@@ -1025,7 +1025,7 @@ class ComponentList(baseclass):
         list: A list of ComponentEntry objects representing the individual components."""
 
     count: int
-    list: List[ComponentEntry] = field(default_factory=list)
+    list_: list[ComponentEntry] = field(default_factory=list)
 
 
 @dataclass
@@ -1067,8 +1067,8 @@ class LData(baseclass):
     acFrequency: float
     activePower: float
     reactivePower: float
-    apparentPower: Optional[float] = 0.0
-    cosPhi: Optional[float] = 0.0
+    apparentPower: float | None = 0.0
+    cosPhi: float | None = 0.0
 
 
 @dataclass
@@ -1101,13 +1101,13 @@ class Telemetry(baseclass):
     operationMode: OperationMode
     L1Data: LData = field(default_factory=lambda: LData(
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
-    L2Data: Optional[LData] = None
-    L3Data: Optional[LData] = None
-    groundFaultResistance: Optional[float] = 0.0
-    vL1To2: Optional[float] = 0.0
-    vL2To3: Optional[float] = 0.0
-    vL3To1: Optional[float] = 0.0
-    dcVoltage: Optional[float] = 0.0
+    L2Data: LData | None = None
+    L3Data: LData | None = None
+    groundFaultResistance: float | None = 0.0
+    vL1To2: float | None = 0.0
+    vL2To3: float | None = 0.0
+    vL3To1: float | None = 0.0
+    dcVoltage: float | None = 0.0
 
 
 @dataclass
@@ -1119,7 +1119,7 @@ class InverterInfo(baseclass):
         telemetries: A list of Telemetry objects representing the individual telemetry records."""
 
     count: int
-    telemetries: List[Telemetry] = field(default_factory=list)
+    telemetries: list[Telemetry] = field(default_factory=list)
 
 
 @dataclass
@@ -1211,9 +1211,9 @@ class responses(APIResponses):
 class SummaryData:
     """This dataclass is used to store data returned by multiple calls to the REST API."""
 
-    sites: List[Site] = field(default_factory=list)
-    inventories: List[InventoryData] = field(default_factory=list)
-    components: List[ComponentEntry] = field(default_factory=list)
+    sites: list[Site] = field(default_factory=list)
+    inventories: list[InventoryData] = field(default_factory=list)
+    components: list[ComponentEntry] = field(default_factory=list)
 
 
 @dataclass
@@ -1235,7 +1235,7 @@ class RESTClient:
     parameters: apiparms
     constants: Type[Enum]
     responses: Type[responses]
-    auth: Optional[Type[Enum]] = None
+    auth: Type[Enum] | None = None
 
 
 # This instance of RESTClient describes the SolarEdge API

@@ -8,7 +8,7 @@ import logging
 from dataclasses import dataclass, field, fields, is_dataclass
 from datetime import date, datetime, time
 from enum import Enum
-from typing import List, Optional, Type, get_args, get_origin, Any, Union
+from typing import List, Optional, Type, get_args, get_origin, Any
 
 import ciso8601
 
@@ -21,7 +21,7 @@ class baseclass:
 
     def parse_kwargs(self, cls, **kwargs: dict):
         # If the key is in our reserved map, rename it; otherwise keep it as-is                
-        reserved_map = {'class': 'class_', 'for': 'for_', 'from': 'from_', 'to': 'to_'}
+        reserved_map = {'class': 'class_', 'for': 'for_', 'from': 'from_', 'to': 'to_', 'list': 'list_'}
 
         for key in list(kwargs.keys()):           
             if key in reserved_map:
@@ -45,8 +45,7 @@ class baseclass:
             return entry_value
 
     def is_optional(self, field):
-        return get_origin(field) is Union and \
-            type(None) in get_args(field)
+        return type(None) in get_args(field)
 
     def __post_init__(self) -> None:
 
@@ -55,8 +54,11 @@ class baseclass:
             if entry_value is None:
                 continue
             entry_type = entry.type
-            if (get_origin(entry_type) is Union):
-                entry_type = get_args(entry_type)[0]
+            if self.is_optional(entry_type):
+                entry_type = next(
+                    field_type for field_type in get_args(entry_type)
+                    if field_type is not type(None)
+                )
             # Order of checks is based on frequency of data within API responses
             # If the entry type is datetime then convert it from a string to a datetime object
             if entry_type is datetime:

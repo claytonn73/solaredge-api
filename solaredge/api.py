@@ -262,9 +262,9 @@ class SolaredgeClient:
         """
         self._set_site_id(site_id)
         results = self._call_api(api=APIList.Components)
-        for entry in results.list:
+        for entry in results.list_:
             entry.site = self._api.arguments.siteid
-        return results.list
+        return results.list_
 
     def get_site_inventory(self, site_id: int | None = None) -> solaredge.const.InventoryData:
         """Get the inventory for a site (meters, sensors, batteries, inverters).
