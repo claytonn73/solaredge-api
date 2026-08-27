@@ -57,7 +57,8 @@ class SolaredgeClient:
         for site in self._storeddata.sites:
             self.logger.info("Found a site with id: %s", site.id)
             # Store the inventory information for each site
-            self._storeddata.inventories.append(self.get_site_inventory(site.id))
+            self._storeddata.inventories.append(
+                self.get_site_inventory(site.id))
         for data in self._storeddata.inventories:
             for inverter in data.inverters:
                 self.logger.info("Found an inverter with SN: %s", inverter.SN)
@@ -77,7 +78,6 @@ class SolaredgeClient:
     def site_list(self) -> list[int]:
         """ Return the site ID from the locally stored data"""
         return [site.id for site in self._storeddata.sites]
-    
 
     @property
     def one_site(self) -> bool:
@@ -95,7 +95,7 @@ class SolaredgeClient:
         if self._storeddata.inventories is None:
             return False
         return len(self.inverter_list) == 1
-    
+
     def set_datetimes(self, start: int = 1, end: int = 0) -> None:
         """Set the startTime and endTime  and startDate/endDate parameters for the API
 
@@ -111,14 +111,20 @@ class SolaredgeClient:
             f"{DateFormats.DATE.value} 23:59:59"
         )
         # Set the startDate and endDate parameters for the API
-        self._api.parameters.startDate = (now - timedelta(days=start)).strftime(DateFormats.DATE.value)
-        self._api.parameters.endDate = (now - timedelta(days=end)).strftime(DateFormats.DATE.value)        
+        self._api.parameters.startDate = (
+            now - timedelta(days=start)).strftime(DateFormats.DATE.value)
+        self._api.parameters.endDate = (
+            now - timedelta(days=end)).strftime(DateFormats.DATE.value)
 
     def set_dates(self, start: int = 1, end: int = 0) -> None:
-        """Set the startDate and endDate parameters for the API - redundant with set_datetimes but kept for backward compatibility"""
+        """Set the startDate and endDate parameters for the API 
+           redundant with set_datetimes but kept for backward compatibility
+        """
         now = datetime.now()
-        self._api.parameters.startDate = (now - timedelta(days=start)).strftime(DateFormats.DATE.value)
-        self._api.parameters.endDate = (now - timedelta(days=end)).strftime(DateFormats.DATE.value)
+        self._api.parameters.startDate = (
+            now - timedelta(days=start)).strftime(DateFormats.DATE.value)
+        self._api.parameters.endDate = (
+            now - timedelta(days=end)).strftime(DateFormats.DATE.value)
 
     def set_time_unit(self, unit: solaredge.const.TimeUnit) -> None:
         """Sets the time unit for the Solaredge API.
@@ -139,7 +145,8 @@ class SolaredgeClient:
         """
         if site_id is not None:
             self._api.arguments.siteid = site_id
-        # If the siteid argument is still none then it was not set initially or provided to the method, so raise an error
+        # If the siteid argument is still none then it was not set initially or 
+        # provided to the method, so raise an error
         if self._api.arguments.siteid is None:
             raise ValueError(
                 "Site ID must be provided either as an argument or set on the client "
@@ -277,7 +284,7 @@ class SolaredgeClient:
         The returned inverters will have their `site` attribute set to the
         site id used for the query.
         """
-        self._set_site_id(site_id)        
+        self._set_site_id(site_id)
         results = self.get_site_inventory(site_id)
         # Add the site ID to each inverter entry for easier handling
         for entry in results.inverters:
@@ -303,35 +310,64 @@ class SolaredgeClient:
         return self._call_api(api=APIList.InverterData).telemetries
 
     @overload
-    def _call_api(self, api: Literal[APIList.Sites], sample: bool = False) -> solaredge.const.SiteList: ...
+    def _call_api(self, api: Literal[APIList.Sites],
+                  sample: bool = False) -> solaredge.const.SiteList: ...
+
     @overload
-    def _call_api(self, api: Literal[APIList.SiteInfo], sample: bool = False) -> solaredge.const.Site: ...
+    def _call_api(self, api: Literal[APIList.SiteInfo],
+                  sample: bool = False) -> solaredge.const.Site: ...
+
     @overload
-    def _call_api(self, api: Literal[APIList.SiteDataPeriod], sample: bool = False) -> solaredge.const.DataPeriod: ...
+    def _call_api(self, api: Literal[APIList.SiteDataPeriod],
+                  sample: bool = False) -> solaredge.const.DataPeriod: ...
+
     @overload
-    def _call_api(self, api: Literal[APIList.SiteOverview], sample: bool = False) -> solaredge.const.OverviewData: ...
+    def _call_api(self, api: Literal[APIList.SiteOverview],
+                  sample: bool = False) -> solaredge.const.OverviewData: ...
+
     @overload
-    def _call_api(self, api: Literal[APIList.SiteEnergy], sample: bool = False) -> solaredge.const.EnergyData: ...
+    def _call_api(self, api: Literal[APIList.SiteEnergy],
+                  sample: bool = False) -> solaredge.const.EnergyData: ...
+
     @overload
-    def _call_api(self, api: Literal[APIList.EnergyDetails], sample: bool = False) -> solaredge.const.DetailData: ...
+    def _call_api(self, api: Literal[APIList.EnergyDetails],
+                  sample: bool = False) -> solaredge.const.DetailData: ...
+
     @overload
-    def _call_api(self, api: Literal[APIList.Power], sample: bool = False) -> solaredge.const.PowerData: ...
+    def _call_api(self, api: Literal[APIList.Power],
+                  sample: bool = False) -> solaredge.const.PowerData: ...
+
     @overload
-    def _call_api(self, api: Literal[APIList.PowerDetails], sample: bool = False) -> solaredge.const.DetailData: ...
+    def _call_api(self, api: Literal[APIList.PowerDetails],
+                  sample: bool = False) -> solaredge.const.DetailData: ...
+
     @overload
-    def _call_api(self, api: Literal[APIList.PowerFlow], sample: bool = False) -> solaredge.const.SiteCurrentPowerFlow: ...
+    def _call_api(self, api: Literal[APIList.PowerFlow],
+                  sample: bool = False) -> solaredge.const.SiteCurrentPowerFlow: ...
+
     @overload
-    def _call_api(self, api: Literal[APIList.Storage], sample: bool = False) -> solaredge.const.StorageData: ...
+    def _call_api(self, api: Literal[APIList.Storage],
+                  sample: bool = False) -> solaredge.const.StorageData: ...
+
     @overload
-    def _call_api(self, api: Literal[APIList.Components], sample: bool = False) -> solaredge.const.ComponentList: ...
+    def _call_api(self, api: Literal[APIList.Components],
+                  sample: bool = False) -> solaredge.const.ComponentList: ...
+
     @overload
-    def _call_api(self, api: Literal[APIList.Inventory], sample: bool = False) -> solaredge.const.InventoryData: ...
+    def _call_api(self, api: Literal[APIList.Inventory],
+                  sample: bool = False) -> solaredge.const.InventoryData: ...
+
     @overload
-    def _call_api(self, api: Literal[APIList.SiteBenefits], sample: bool = False) -> solaredge.const.EnvBenefits: ...
+    def _call_api(self, api: Literal[APIList.SiteBenefits],
+                  sample: bool = False) -> solaredge.const.EnvBenefits: ...
+
     @overload
-    def _call_api(self, api: Literal[APIList.SiteEnergyTimeframe], sample: bool = False) -> solaredge.const.TimeFrameEnergyData: ...
+    def _call_api(self, api: Literal[APIList.SiteEnergyTimeframe],
+                  sample: bool = False) -> solaredge.const.TimeFrameEnergyData: ...
+
     @overload
-    def _call_api(self, api: Literal[APIList.InverterData], sample: bool = False) -> solaredge.const.InverterInfo: ...
+    def _call_api(self, api: Literal[APIList.InverterData],
+                  sample: bool = False) -> solaredge.const.InverterInfo: ...
 
     def _call_api(self, api: solaredge.const.APIList = APIList.Sites, sample: bool = False) -> Union[
         solaredge.const.SiteList,
@@ -354,8 +390,9 @@ class SolaredgeClient:
         if sample:
             self.logger.info("Processing sample json for: %s", api.name)
         self.logger.info("Calling API endpoint: %s", api.name)
-        # Create a dictionary entry for the arguments required by the endpoint        
-        argumentlist = {entry.value: getattr(self._api.arguments, entry.value) for entry in api.value.arguments}
+        # Create a dictionary entry for the arguments required by the endpoint
+        argumentlist = {entry.value: getattr(
+            self._api.arguments, entry.value) for entry in api.value.arguments}
         # Create parameter list from the api definition where the parameter has been set
         params = {
             entry.value: getattr(self._api.parameters, entry.value).value
@@ -382,8 +419,11 @@ class SolaredgeClient:
             self.logger.error("JSON decoder error encountered: %s", err)
             raise
         if self.logger.isEnabledFor(logging.DEBUG):
-            self.logger.debug("Formatted API results:\n %s", ujson.dumps(results_json, indent=2))
+            self.logger.debug("Formatted API results:\n %s",
+                              ujson.dumps(results_json, indent=2))
         if api.value.returns is not None:
-            data = api.value.response.parse_kwargs(self, api.value.response, **results_json) # type: ignore
+            data = api.value.response.parse_kwargs( # type: ignore
+                self, api.value.response, **results_json)  
             return getattr(data, api.value.returns)
+        # type: ignore
         return api.value.response.parse_kwargs(self, api.value.response, **results_json) # type: ignore

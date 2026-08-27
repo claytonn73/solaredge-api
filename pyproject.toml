@@ -10,8 +10,6 @@ dependencies = [
     "python-dotenv",
     "influxdb",
     "argparse",
-    "dateutil",
-    "dataclasses_json",
 ]
 authors = [
   { name="Nick Clayton"},

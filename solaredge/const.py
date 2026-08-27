@@ -593,7 +593,8 @@ class EnergyValue(baseclass):
 class TimeFrameEnergyData(baseclass):
     """Represents energy data for a site over a specific time frame.
 
-    This dataclass contains the total energy, unit, measurement source, and lifetime energy values at the start and end of the period.
+    This dataclass contains the total energy, unit, measurement source,
+    and lifetime energy values at the start and end of the period.
     """
     energy: float
     unit: Unit
@@ -606,7 +607,8 @@ class TimeFrameEnergyData(baseclass):
 class TimeFrameEnergyResponse(baseclass):
     """Represents the response from the Site Energy Timeframe API endpoint.
 
-    This dataclass contains energy data for a site over a specific time frame, including total energy and lifetime values.
+    This dataclass contains energy data for a site over a specific time frame, 
+    including total energy and lifetime values.
     """
     timeFrameEnergy: TimeFrameEnergyData
 
@@ -1031,13 +1033,12 @@ class ComponentsResponse(baseclass):
     """This dataclass describes the response from the Components API endpoint
 
     Attributes:
-        reporters: The list of components returned by the API, encapsulated in a ComponentList object.
+        reporters: A ComponentList object containing the list of components returned by the API.
     """
 
     reporters: ComponentList
 
 
-# This endpoint returns a list of equipment/components for a given site, including details such as name, manufacturer, model, serial number, and kWpDC.
 Components = Endpoint(
     endpoint="equipment/{siteid}/list",
     name="Site Components",
