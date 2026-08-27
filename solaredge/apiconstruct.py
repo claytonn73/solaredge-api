@@ -31,7 +31,10 @@ class baseclass:
         for k in kwargs:
             if k not in cls.__match_args__:
                 logger.error("%s got an unexpected keyword argument %s", cls.__name__, k)
-        return cls(**{k: kwargs[k] for k in kwargs if k in cls.__match_args__})
+        return cls(**{
+            key: value for key, value in kwargs.items()
+            if key in cls.__match_args__
+        })
 
 
 
@@ -47,7 +50,7 @@ class baseclass:
     def is_optional(self, field):
         return type(None) in get_args(field)
 
-    def __post_init__(self) -> None:
+    def __post_init__(self) -> None:  # pylint: disable=R1260
 
         for entry in fields(self):
             if (entry_value := getattr(self, entry.name)) is None:
