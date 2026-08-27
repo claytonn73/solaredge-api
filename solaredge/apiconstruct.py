@@ -50,8 +50,7 @@ class baseclass:
     def __post_init__(self) -> None:
 
         for entry in fields(self):
-            entry_value = getattr(self, entry.name)
-            if entry_value is None:
+            if (entry_value := getattr(self, entry.name)) is None:
                 continue
             entry_type = entry.type
             if self.is_optional(entry_type):
@@ -75,7 +74,7 @@ class baseclass:
                 setattr(self, entry.name, ciso8601.parse_datetime(entry_value).time())
             # If the entry type is a list
             elif get_origin(entry_type) is list:
-                list_type : Type = get_args(entry_type)[0]
+                list_type : type = get_args(entry_type)[0]
                 # If the type of the list entry is a dataclass then parse each entry of the list into the dataclass
                 if (is_dataclass(list_type)) and (bool(entry_value)):
                     for index, data in enumerate(entry_value):

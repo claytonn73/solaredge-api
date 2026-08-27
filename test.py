@@ -1,38 +1,38 @@
 #!/usr/bin/env python3
 """Call the Solaredge API and print the results."""
 
-import pprint
 import logging
+import pprint
 from datetime import datetime  # noqa
-# from cProfile import Profile
-# from pstats import SortKey, Stats
 
 from solaredge.api import SolaredgeClient
 from utilities import get_env, get_logger
+from solaredge.const import TimeUnit, DateFormats
 
+logger = get_logger(destination="stdout")
+logger.setLevel(logging.DEBUG)
 
 def main() -> None:
     """Call one of the Solaredge Api endpoints and print the formatted results."""
-    logger = get_logger(destination="stdout") # noqa
     env = get_env()
-    logger.setLevel(logging.DEBUG)
-    with SolaredgeClient(apikey=env.get('solaredge_apikey')) as client:
-        help(client)
-        pprint.pprint(client.get_supported_versions())
+    api_key = env.get('solaredge_apikey')
+    if api_key is None:
+        raise ValueError("solaredge environment variable is not set")    
+    with SolaredgeClient(apikey=api_key) as client:
+        client.set_datetimes(3, 1)
+        # help(client)
+        
+        #for site in client.site_list:
+        #    for data in client.get_energy(site_id=site).values:
+        #        logger.info(f"Site: {site} - Energy Data: {data}")
         for site in client.get_sites():
-            pprint.pprint(site)
-        # pprint.pprint(client.get_inverters(site.id))
-        # pprint.pprint(client.get_inverter_telemetry())
-        # pprint.pprint(list(client._api.constants))
+            pprint.pprint(client.get_site_details(site.id))
+            pprint.pprint(client.get_site_inventory(site.id))
+            pprint.pprint(client.get_site_components(site.id))            
+            pprint.pprint(client.get_power_flow(site.id))            
+        #pprint.pprint(client.get_inverter_telemetry())
+        pprint.pprint(client._api)
 
 
 if __name__ == "__main__":
     main()       
-    # with Profile() as profile:
-    #     print(main())
-    # (
-    #     Stats(profile)
-    #     .strip_dirs()
-    #     .sort_stats(SortKey.TIME)
-    #     .print_stats()
-    # )

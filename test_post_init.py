@@ -54,10 +54,10 @@ class PostInitFixture(baseclass):
     ratio: float
     count: int
     enabled: bool
-    optional_created_at: Optional[datetime]
-    optional_nested: Optional[NestedFixture]
-    optional_state: Optional[FixtureState]
-    nullable_text: Optional[str]
+    optional_created_at: datetime | None
+    optional_nested: NestedFixture | None
+    optional_state: FixtureState | None
+    nullable_text: str | None
     created_at: datetime
     nested: NestedFixture
     tags: list[str] = field(default_factory=list)
@@ -78,7 +78,7 @@ class ParserHarness:
 
 class TestPostInitFixture(unittest.TestCase):
     def test_parse_kwargs_exercises_post_init_conversions(self) -> None:
-        payload = json.loads(Path("tests/post_init_fixture.json").read_text())
+        payload = json.loads(Path("tests/post_init_fixture.json").read_text(encoding="utf-8"))
         parser = ParserHarness()
 
         result = parser.parse_kwargs(PostInitFixture, **payload)

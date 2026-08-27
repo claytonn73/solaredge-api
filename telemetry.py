@@ -11,10 +11,8 @@ logger = get_logger(destination="syslog", level="INFO")
 def main() -> None:
     """Load historical telemetry data into influxdb."""
     env = get_env()
-    apikey = env.get('solaredge_apikey')
-    if apikey is None:
-        raise ValueError(
-            "Missing required environment variable: solaredge_apikey")
+    if (apikey := env.get('solaredge_apikey')) is None:
+        raise ValueError("Missing required environment variable: solaredge_apikey")
     with InfluxConnection(database="solaredge", reset=False).connect() as connection:
         with SolaredgeClient(apikey=apikey) as client:
             client.set_datetimes(3, 1)

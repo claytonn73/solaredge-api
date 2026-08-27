@@ -65,8 +65,7 @@ class SolarEdgeGUI(tk.Tk):
         self.result_text.pack(pady=10, fill=tk.BOTH, expand=True)
 
     def fetch_data(self):
-        api_key = self.api_key_entry.get().strip()
-        if not api_key:
+        if not (api_key := self.api_key_entry.get().strip()):
             messagebox.showerror("Error", "API Key is required.")
             return
         if not self.api_client:
@@ -78,7 +77,7 @@ class SolarEdgeGUI(tk.Tk):
         data_type = self.data_type_var.get()
         site_id = self.site_id_entry.get().strip()
         try:
-            method = self.api_client.__getattribute__(data_type)
+            method = getattr(self.api_client, data_type)
             if isinstance(method, list):
                 result = method
             else:
