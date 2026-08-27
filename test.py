@@ -3,11 +3,11 @@
 
 import logging
 import pprint
-from datetime import datetime  # noqa
+#from datetime import datetime  # noqa
 
 from solaredge.api import SolaredgeClient
+#from solaredge.const import DateFormats, TimeUnit
 from utilities import get_env, get_logger
-from solaredge.const import TimeUnit, DateFormats
 
 logger = get_logger(destination="stdout")
 logger.setLevel(logging.DEBUG)
@@ -15,8 +15,7 @@ logger.setLevel(logging.DEBUG)
 def main() -> None:
     """Call one of the Solaredge Api endpoints and print the formatted results."""
     env = get_env()
-    api_key = env.get('solaredge_apikey')
-    if api_key is None:
+    if (api_key := env.get('solaredge_apikey')) is None:
         raise ValueError("solaredge environment variable is not set")    
     with SolaredgeClient(apikey=api_key) as client:
         client.set_datetimes(3, 1)

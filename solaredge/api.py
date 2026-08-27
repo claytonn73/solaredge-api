@@ -3,14 +3,14 @@
 import enum
 import logging
 from datetime import datetime, timedelta
-from typing import Literal, Union, overload
+from typing import Literal, overload
 
 import requests
 import ujson
 from requests.adapters import HTTPAdapter
 
 import solaredge.const
-from solaredge.const import APIList, DateFormats, Solaredge, responses
+from solaredge.const import APIList, DateFormats, Solaredge
 
 # Only export the Solaredge Client
 __all__ = ["SolaredgeClient"]
@@ -369,23 +369,22 @@ class SolaredgeClient:
     def _call_api(self, api: Literal[APIList.InverterData],
                   sample: bool = False) -> solaredge.const.InverterInfo: ...
 
-    def _call_api(self, api: solaredge.const.APIList = APIList.Sites, sample: bool = False) -> Union[
-        solaredge.const.SiteList,
-        solaredge.const.Site,
-        solaredge.const.DataPeriod,
-        solaredge.const.OverviewData,
-        solaredge.const.EnergyData,
-        solaredge.const.DetailData,
-        solaredge.const.PowerData,
-        solaredge.const.DetailData,
-        solaredge.const.SiteCurrentPowerFlow,
-        solaredge.const.StorageData,
-        solaredge.const.ComponentList,
-        solaredge.const.InventoryData,
-        solaredge.const.EnvBenefits,
-        solaredge.const.TimeFrameEnergyData,
-        solaredge.const.InverterInfo,
-    ]:
+    def _call_api(self, api: solaredge.const.APIList = APIList.Sites, sample: bool = False, ) -> (
+        solaredge.const.SiteList
+        | solaredge.const.Site
+        | solaredge.const.DataPeriod
+        | solaredge.const.OverviewData
+        | solaredge.const.EnergyData
+        | solaredge.const.DetailData
+        | solaredge.const.PowerData
+        | solaredge.const.SiteCurrentPowerFlow
+        | solaredge.const.StorageData
+        | solaredge.const.ComponentList
+        | solaredge.const.InventoryData
+        | solaredge.const.EnvBenefits
+        | solaredge.const.TimeFrameEnergyData
+        | solaredge.const.InverterInfo
+    ):
         """Initialise the arguments required to call one of the REST APIs and then call it returning the results."""
         if sample:
             self.logger.info("Processing sample json for: %s", api.name)

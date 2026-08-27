@@ -5,7 +5,6 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, time
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 from solaredge.apiconstruct import baseclass
 
