@@ -161,7 +161,7 @@ class APIArgs(StrEnum):
     SERIALNUMBER = "serialnumber"
 
 
-@dataclass
+@dataclass(slots=True)
 class apiargs(APIArguments):
     """Dataclass describing the set of arguments used by the API endpoints.
 
@@ -206,7 +206,7 @@ class DateFormats(StrEnum):
     DATETIMET = '%Y-%m-%dT%H:%MZ'
 
 
-@dataclass
+@dataclass(slots=True)
 class apiparms(APIParameters):
     """Parameters that may be passed to any SolarEdge endpoint.
 
