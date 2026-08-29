@@ -39,14 +39,13 @@ def main() -> None:
     env = get_env()
     apikey = env.get('solaredge_apikey')
     if not isinstance(apikey, str) or not apikey:
-        raise ValueError(
-            "Missing or invalid 'solaredge_apikey' in environment variables.")
+        raise ValueError("Missing or invalid 'solaredge_apikey' in environment variables.")
     with InfluxConnection(database="solaredge", reset=False).connect() as connection, SolaredgeClient(apikey=apikey) as client:
-            client.set_datetimes(3, 1)
-            add_energy_data(client, connection, TimeUnit.DAY,
-                            "daily_energy_generated")
-            add_energy_data(client, connection, TimeUnit.HOUR,
-                            "hourly_energy_generated")
+        client.set_datetimes(3, 1)
+        add_energy_data(client, connection, TimeUnit.DAY,
+                        "daily_energy_generated")
+        add_energy_data(client, connection, TimeUnit.HOUR,
+                        "hourly_energy_generated")
 
 
 if __name__ == "__main__":
