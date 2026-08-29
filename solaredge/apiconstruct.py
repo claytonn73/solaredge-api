@@ -8,6 +8,7 @@ import logging
 from dataclasses import dataclass, field, fields, is_dataclass
 from datetime import date, datetime, time
 from enum import Enum
+from types import NoneType
 from typing import get_args, get_origin
 
 import ciso8601
@@ -54,21 +55,21 @@ class baseclass:
     def _coerce_value(self, field_type, value):
         if field_type is datetime:
             return ciso8601.parse_datetime(value)
-        elif field_type is date:
+        if field_type is date:
             return ciso8601.parse_datetime(value).date()
-        elif field_type is time:
+        if field_type is time:
             return ciso8601.parse_datetime(value).time()
-        elif is_dataclass(field_type):
+        if is_dataclass(field_type):
             return self.parse_kwargs(field_type, **value)        
-        elif isinstance(field_type, type) and issubclass(field_type, Enum):
+        if isinstance(field_type, type) and issubclass(field_type, Enum):
             return self.process_enum(field_type, value)
-        elif get_origin(field_type) is list:
+        if get_origin(field_type) is list:
             item_type = get_args(field_type)[0]
             return [
                 self._coerce_value(item_type, item) if item is not None else None
                 for item in value
             ]
-        elif get_origin(field_type) is dict:
+        if get_origin(field_type) is dict:
             key_type, value_type = get_args(field_type)
             return {
                 self._convert_key(key_type, k): self._coerce_value(value_type, v)
@@ -89,7 +90,7 @@ class baseclass:
 
             if self.is_optional(field_type):
                 field_type = next(
-                    t for t in get_args(field_type) if t is not type(None)
+                    t for t in get_args(field_type) if t is not NoneType
                 )
 
             if field_type in (float, str, int, bool) or value in (None, "", [], {}):
