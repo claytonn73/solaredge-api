@@ -23,8 +23,7 @@ class baseclass:
 
     def parse_kwargs(self, cls, **kwargs: dict):
         # If the key is in our reserved map, rename it; otherwise keep it as-is
-        reserved_map = {'class': 'class_', 'for': 'for_',
-                        'from': 'from_', 'to': 'to_', 'list': 'list_'}
+        reserved_map = {"class": "class_", "for": "for_", "from": "from_", "to": "to_", "list": "list_"}
 
         for key in list(kwargs.keys()):
             if key in reserved_map:
@@ -33,12 +32,8 @@ class baseclass:
         # Parse only keywords that are defined in the dataclass definition
         for k in kwargs:
             if k not in cls.__match_args__:
-                logger.error(
-                    "%s got an unexpected keyword argument %s", cls.__name__, k)
-        return cls(**{
-            key: value for key, value in kwargs.items()
-            if key in cls.__match_args__
-        })
+                logger.error("%s got an unexpected keyword argument %s", cls.__name__, k)
+        return cls(**{key: value for key, value in kwargs.items() if key in cls.__match_args__})
 
     def process_enum(self, entry_type: type[Enum], entry_value: str) -> Enum | str:
         """Process an Enum entry type"""
@@ -51,7 +46,7 @@ class baseclass:
 
     def is_optional(self, entry):
         return type(None) in get_args(entry)
-    
+
     def _coerce_value(self, field_type, value):
         if field_type is datetime:
             return ciso8601.parse_datetime(value)
@@ -60,44 +55,34 @@ class baseclass:
         if field_type is time:
             return ciso8601.parse_datetime(value).time()
         if is_dataclass(field_type):
-            return self.parse_kwargs(field_type, **value)        
+            return self.parse_kwargs(field_type, **value)
         if isinstance(field_type, type) and issubclass(field_type, Enum):
             return self.process_enum(field_type, value)
         if get_origin(field_type) is list:
             item_type = get_args(field_type)[0]
-            return [
-                self._coerce_value(item_type, item) if item is not None else None
-                for item in value
-            ]
+            return [self._coerce_value(item_type, item) if item is not None else None for item in value]
         if get_origin(field_type) is dict:
             key_type, value_type = get_args(field_type)
-            return {
-                self._convert_key(key_type, k): self._coerce_value(value_type, v)
-                for k, v in value.items()
-            }
+            return {self._convert_key(key_type, k): self._coerce_value(value_type, v) for k, v in value.items()}
         return value
-   
-   
+
     def _convert_key(self, key_type, key):
         if isinstance(key_type, type) and issubclass(key_type, Enum):
             return getattr(key_type, key)
         return key
-   
+
     def __post_init__(self):
         for entry in fields(self):
             field_type = entry.type
             value = getattr(self, entry.name)
 
             if self.is_optional(field_type):
-                field_type = next(
-                    t for t in get_args(field_type) if t is not NoneType
-                )
+                field_type = next(t for t in get_args(field_type) if t is not NoneType)
 
             if field_type in (float, str, int, bool) or value in (None, "", [], {}):
                 continue
 
             setattr(self, entry.name, self._coerce_value(field_type, value))
-
 
 
 @dataclass(frozen=True)
