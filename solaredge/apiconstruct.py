@@ -8,7 +8,7 @@ import logging
 from dataclasses import dataclass, field, fields, is_dataclass
 from datetime import date, datetime, time
 from enum import Enum
-from typing import Any, get_args, get_origin
+from typing import get_args, get_origin
 
 import ciso8601
 
@@ -50,78 +50,53 @@ class baseclass:
 
     def is_optional(self, entry):
         return type(None) in get_args(entry)
-
-    def __post_init__(self) -> None:  # pylint: disable=too-complex
-
+    
+    def _coerce_value(self, field_type, value):
+        if field_type is datetime:
+            return ciso8601.parse_datetime(value)
+        elif field_type is date:
+            return ciso8601.parse_datetime(value).date()
+        elif field_type is time:
+            return ciso8601.parse_datetime(value).time()
+        elif is_dataclass(field_type):
+            return self.parse_kwargs(field_type, **value)        
+        elif isinstance(field_type, type) and issubclass(field_type, Enum):
+            return self.process_enum(field_type, value)
+        elif get_origin(field_type) is list:
+            item_type = get_args(field_type)[0]
+            return [
+                self._coerce_value(item_type, item) if item is not None else None
+                for item in value
+            ]
+        elif get_origin(field_type) is dict:
+            key_type, value_type = get_args(field_type)
+            return {
+                self._convert_key(key_type, k): self._coerce_value(value_type, v)
+                for k, v in value.items()
+            }
+        return value
+   
+   
+    def _convert_key(self, key_type, key):
+        if isinstance(key_type, type) and issubclass(key_type, Enum):
+            return getattr(key_type, key)
+        return key
+   
+    def __post_init__(self):
         for entry in fields(self):
-            if (entry_value := getattr(self, entry.name)) is None:
-                continue
-            entry_type: Any = entry.type
-            if self.is_optional(entry_type):
-                entry_type = next(
-                    field_type for field_type in get_args(entry_type)
-                    if not isinstance(None, field_type)
+            field_type = entry.type
+            value = getattr(self, entry.name)
+
+            if self.is_optional(field_type):
+                field_type = next(
+                    t for t in get_args(field_type) if t is not type(None)
                 )
-            # Order of checks is based on frequency of data within API responses
-            # If the entry type is datetime then convert it from a string to a datetime object
-            if entry_type is datetime:
-                setattr(self, entry.name, ciso8601.parse_datetime(entry_value))
-            elif entry_type in {float, str, int, bool}:
+
+            if field_type in (float, str, int, bool) or value in (None, "", [], {}):
                 continue
-            elif entry_type is range or isinstance(entry_value, range):
-                continue
-            # If the entry type is date then convert it from a string to a date object
-            elif entry_type is date:
-                setattr(self, entry.name, ciso8601.parse_datetime(
-                    entry_value).date())
-            # If the entry type is time then convert it from a string to a time object
-            elif entry_type is time:
-                setattr(self, entry.name, ciso8601.parse_datetime(
-                    entry_value).time())
-            # If the entry type is a list
-            elif get_origin(entry_type) is list:
-                list_type: type = get_args(entry_type)[0]
-                # If the type of the list entry is a dataclass then parse each entry of the list into the dataclass
-                if (is_dataclass(list_type)) and (bool(entry_value)):
-                    for index, data in enumerate(entry_value):
-                        entry_value[index] = self.parse_kwargs(
-                            list_type, **(data))
-                # If the type of the list entry is an Enum then convert it to an Enum entry
-                elif issubclass(list_type, Enum):
-                    setattr(
-                        self,
-                        entry.name,
-                        [self.process_enum(list_type, data)
-                         for data in entry_value],
-                    )
-            # If the entry type is a dataclass and the entry is not null then parse the entry into the dataclass
-            elif (is_dataclass(entry_type)) and (bool(entry_value)):
-                setattr(
-                    self, entry.name, self.parse_kwargs(
-                        entry_type, **(entry_value))
-                )
-            # If the entry type is an Enum then convert it to an Enum entry
-            elif issubclass(entry_type, Enum):
-                setattr(self, entry.name, self.process_enum(
-                    entry_type, entry_value))
-            # If the entry type is a dict and the entry is not null
-            elif (get_origin(entry_type) is dict) and (bool(entry_value)):
-                # Create a new dict in case we have to change the index
-                new_dict = {}
-                for index, data in enumerate(entry_value):
-                    # if the dict value is a dataclass
-                    if is_dataclass(entry_type.__args__[1]):
-                        entry_value[data] = self.parse_kwargs(
-                            entry_type.__args__[1], **(entry_value[data])
-                        )
-                    # if the dict index is an enum
-                    if issubclass(entry_type.__args__[0], Enum):
-                        new_dict[getattr(entry_type.__args__[0], data)] = entry_value[
-                            data
-                        ]
-                    else:
-                        new_dict[data] = entry_value[data]
-                setattr(self, entry.name, new_dict)
+
+            setattr(self, entry.name, self._coerce_value(field_type, value))
+
 
 
 @dataclass(frozen=True)
@@ -170,7 +145,7 @@ class RESTClient:
     url: str
     responses: type[APIResponses]
     apilist: type[Enum]
-    parameters: Any | None = None
-    arguments: Any | None = None
+    parameters: Enum | None = None
+    arguments: Enum | None = None
     auth: str | None = None
     constants: type[Enum] | None = None

@@ -965,7 +965,8 @@ class Inverter(baseclass):
     Attributes:
         SN: The serial number of the inverter which is used in other API requests
 
-        name, manufacturer, model, communicationMethod, cpuVersion, connectedOptimizers"""
+        name, manufacturer, model, communicationMethod, cpuVersion, connectedOptimizers
+    """
 
     SN: str
     name: str
@@ -1049,7 +1050,8 @@ class ComponentList(baseclass):
 
     Attributes:
         count: The total number of components returned by the API.
-        list: A list of ComponentEntry objects representing the individual components."""
+        list: A list of ComponentEntry objects representing the individual components.
+    """
 
     count: int
     list_: list[ComponentEntry] = field(default_factory=list)
@@ -1087,7 +1089,8 @@ class LData(baseclass):
         activePower: The active power for the phase.
         reactivePower: The reactive power for the phase.
         apparentPower: The apparent power for the phase, if available.
-        cosPhi: The power factor (cosine of the phase angle) for the phase, if available."""
+        cosPhi: The power factor (cosine of the phase angle) for the phase, if available.
+    """
 
     acCurrent: float
     acVoltage: float
@@ -1144,7 +1147,8 @@ class InverterInfo(baseclass):
 
     Attributes:
         count: The total number of telemetry records returned by the API.
-        telemetries: A list of Telemetry objects representing the individual telemetry records."""
+        telemetries: A list of Telemetry objects representing the individual telemetry records.
+    """
 
     count: int
     telemetries: list[Telemetry] = field(default_factory=list)

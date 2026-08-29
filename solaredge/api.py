@@ -425,4 +425,4 @@ class SolaredgeClient:
             data = api.value.response.parse_kwargs(  # type: ignore
                 self, api.value.response, **results_json)
             return getattr(data, api.value.returns)
-        return api.value.response.parse_kwargs(self, api.value.response, **results_json) # type: ignore
+        return api.value.response.parse_kwargs(self, api.value.response, **results_json)  # type: ignore
